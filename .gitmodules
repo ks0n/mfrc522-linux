@@ -2,3 +2,4 @@
 	path = linux
     url = https://github.com/torvalds/linux
     branch = v5.4
+    shallow = true
