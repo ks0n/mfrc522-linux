@@ -1,10 +1,8 @@
 FROM debian:latest
 
-# Set the workdir in app cause that's what they do on the internet
-WORKDIR /app
+ARG user_name
+ARG user_id
 
-# Copy the repository into app/ so we can work
-COPY . /app
 
 RUN apt-get -y update
 
@@ -16,3 +14,11 @@ RUN apt-get install -y qemu-system-arm
 
 # Cross-compiling toolchain and tools
 RUN apt-get install -y gcc-arm-linux-gnueabi cpio
+
+# Create a new user
+RUN useradd -m -u $user_id -G sudo $user_name
+
+# Set the workdir in app cause that's what they do on the internet
+WORKDIR /app
+
+USER $user_name
