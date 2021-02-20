@@ -7,4 +7,12 @@ WORKDIR /app
 COPY . /app
 
 RUN apt-get -y update
-RUN apt-get install -y bison build-essential flex gawk git libelf-dev libncurses-dev lzop unzip
+
+# Linux dependencies
+RUN apt-get install -y bison build-essential flex gawk git libelf-dev libncurses-dev lzop unzip bc
+
+# QEMU
+RUN apt-get install -y qemu-system-arm
+
+# Cross-compiling toolchain and tools
+RUN apt-get install -y gcc-arm-linux-gnueabi cpio
