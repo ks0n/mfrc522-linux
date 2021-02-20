@@ -1,5 +1,5 @@
 [submodule "linux"]
 	path = linux
-    url = https://github.com/torvalds/linux
-    branch = v5.4
+    url = git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+    branch = v5.4.99
     shallow = true
