@@ -1,0 +1,34 @@
+#!/bin/sh
+set -e
+
+TOOLCHAIN_URL='https://toolchains.bootlin.com/downloads/releases/toolchains/armv7-eabihf/tarballs/armv7-eabihf--musl--stable-2020.08-1.tar.bz2'
+TOOLCHAIN_NAME='armv7_eabihf_musl_toolchain'
+TOOLCHAIN_ARCHIVE=$TOOLCHAIN_NAME.tar.bz2
+TOOLCHAIN_DIR=''
+
+download_toolchain() {
+    curl -o $TOOLCHAIN_ARCHIVE $TOOLCHAIN_URL
+}
+
+extract_toolchain() {
+    tar -xf $TOOLCHAIN_ARCHIVE
+
+    rm "$TOOLCHAIN_ARCHIVE"
+}
+
+get_toolchain() {
+    download_toolchain
+    extract_toolchain
+}
+
+if [ ! -d "$TOOLCHAIN_DIR" ]
+then
+    get_toolchain
+fi
+
+export ARCH=arm
+export CROSS_COMPILE=$PWD/$TOOLCHAIN_DIR/bin/
+alias cross-gcc=$PWD/$TOOLCHAIN_DIR
+
+
+

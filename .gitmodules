@@ -1,0 +1,3 @@
+[submodule "toolchains-builder"]
+	path = toolchains-builder
+	url = git@github.com:bootlin/toolchains-builder.git
