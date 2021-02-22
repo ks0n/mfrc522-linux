@@ -1,1 +1,11 @@
 tags
+
+# Object files overall
+*.o
+
+# Files regenerated when compiling modules
+*.ko
+*.mod*
+*.cmd
+Module.symvers
+modules.order
