@@ -1,0 +1,8 @@
+# Env file
+*.env
+
+# Tags file
+tags
+
+# Toolchain folder
+*_toolchain

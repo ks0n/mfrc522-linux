@@ -29,9 +29,5 @@ then
     get_toolchain
 fi
 
-export ARCH=arm
-export CROSS_COMPILE=$PWD/$TOOLCHAIN_DIR/bin/
-alias cross-gcc=$PWD/$TOOLCHAIN_DIR
-
-
-
+echo -e "export ARCH=arm\nexport CROSS_COMPILE=$PWD/$TOOLCHAIN_DIR/bin/" > toolchain.env
+echo 'Please run ``source toolchain.env``'
