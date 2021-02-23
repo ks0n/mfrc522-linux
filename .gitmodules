@@ -1,3 +1,5 @@
-[submodule "toolchains-builder"]
-	path = toolchains-builder
-	url = git@github.com:bootlin/toolchains-builder.git
+[submodule "linux"]
+    path = linux
+    url = git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+    branch = v5.4.99
+    shallow = true
