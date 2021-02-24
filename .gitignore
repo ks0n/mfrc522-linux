@@ -1,8 +1,18 @@
+# Toolchain folder
+*_toolchain
+
 # Env file
 *.env
 
 # Tags file
 tags
 
-# Toolchain folder
-*_toolchain
+# Object files overall
+*.o
+
+# Files regenerated when compiling modules
+*.ko
+*.mod*
+*.cmd
+Module.symvers
+modules.order
