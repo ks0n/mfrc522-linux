@@ -1,3 +1,10 @@
+# Toolchain folder
+*_toolchain
+
+# Env file
+*.env
+
+# Tags file
 tags
 
 # Object files overall
