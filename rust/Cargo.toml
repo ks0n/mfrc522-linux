@@ -1,0 +1,23 @@
+[package]
+name = "mfrc522"
+version = "0.1.0"
+authors = ["Esteban Blanc <esteban.blanc@lse.epita.fr>"]
+edition = "2018"
+
+[lib]
+name = "mfrc522_rs"
+path = "src/lib.rs"
+crate-type = ["staticlib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.57"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
