@@ -29,5 +29,5 @@ then
     get_toolchain
 fi
 
-echo -e "export ARCH=arm\nexport CROSS_COMPILE=$PWD/$TOOLCHAIN_DIR/bin/" > toolchain.env
+echo -e "export ARCH=arm\nexport CROSS_COMPILE=$PWD/$TOOLCHAIN_DIR/bin/arm-buildroot-linux-musleabihf-" > toolchain.env
 echo 'Please run ``source toolchain.env``'
