@@ -1,0 +1,4 @@
+[build]
+rustflags = [
+"-C", "relocation-model=static", "-C", "code-model=kernel", "-Z", "plt=y"
+]
