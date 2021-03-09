@@ -1,5 +1,10 @@
 [submodule "linux"]
-    path = linux
-    url = https://github.com/raspberrypi/linux
-    branch = raspberrypi-kernel_1.20210303-1
-    shallow = true
+	path = linux
+	url = https://github.com/raspberrypi/linux
+	branch = raspberrypi-kernel_1.20210303-1
+	shallow = true
+[submodule "buildroot"]
+	path = buildroot
+	url = https://git.busybox.net/buildroot/
+	branch = 2021.02
+	shallow = true
