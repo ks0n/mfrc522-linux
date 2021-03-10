@@ -1,0 +1,17 @@
+name: mfrc522-coding-style
+
+on:
+  pull_request:
+  push:
+    branches:
+      master
+
+jobs:
+  coding-style:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Check the coding style
+      run: |
+        linux/scripts/checkpatch.pl module/*.[ch]
