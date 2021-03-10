@@ -14,4 +14,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Check the coding style
       run: |
+        git submodule sync --recursive
+        git submodule update --init --force --recursive
         linux/scripts/checkpatch.pl module/*.[ch]
