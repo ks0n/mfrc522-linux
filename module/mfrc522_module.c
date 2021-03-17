@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include "mfrc522_parser.h"
 #include <linux/module.h>
 #include <linux/miscdevice.h>
 #include <linux/init.h>
@@ -11,7 +12,18 @@ MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 
 static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len, loff_t *offset) {
+    struct mfrc522_command *command;
+
     pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
+
+    command = mfrc522_parse(buffer, len);
+
+    if (!command) {
+        pr_err("[MFRC522] Got invalid command\n");
+        return 1;
+    }
+
+    pr_info("[MFRC522] Got following command: %d\n", command->cmd);
 
     return len;
 }
