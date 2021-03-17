@@ -12,8 +12,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Check the coding style
+
+    - name: Download checkpatch.pl
       run: |
-        git submodule sync --recursive
-        git submodule update --init --force --recursive
-        linux/scripts/checkpatch.pl module/*.[ch]
+        curl https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl -O
+        chmod +x checkpatch.pl
+
+    - name: Check the coding style
+      run: ./checkpatch.pl --no-tree -f module/*.[ch]
