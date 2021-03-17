@@ -20,11 +20,11 @@ MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 static int mfrc522_spi_probe(struct spi_device *spi);
 
 static struct spi_driver mfrc522_spi = {
-    .driver = {
-        .name = "mfrc522",
-        .owner = THIS_MODULE,
-    },
-    .probe = mfrc522_spi_probe,
+	.driver = {
+		.name = "mfrc522",
+		.owner = THIS_MODULE,
+	},
+	.probe = mfrc522_spi_probe,
 };
 
 /** Detect if the device we are talking to is an MFRC522 using the VersionReg,
