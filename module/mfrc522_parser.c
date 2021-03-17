@@ -95,7 +95,7 @@ struct mfrc522_command *mfrc522_parse(const char *input, size_t len) {
     // If `input_mut` is not NULL, then we have found colons. However, we might have
     // also found a command that does not expect any arguments
     if (command->parameter_amount == 0) {
-        pr_err("[MFRC522] Invalid command: %s: Expected 0 arguments but found some\n", input);
+        pr_err("[MFRC522] Invalid command: %s: Expected 0 arguments but found some\n", token);
         return NULL;
     }
 
