@@ -1,4 +1,5 @@
 obj-m += mfrc522.o
+mfrc522-objs += mfrc522_module.o mfrc522_spi.o
 
 MAKE = make -C ../linux/ M=$(PWD)
 
