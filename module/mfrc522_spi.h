@@ -5,9 +5,9 @@
 #include <linux/compiler.h>
 
 struct address_byte {
-	u8 lsb: 1; // 0
-	u8 addr: 6;
-	u8 rw: 1; // 1 -> Read, 0 -> Write
+	u8 lsb : 1; // 0
+	u8 addr : 6;
+	u8 rw : 1; // 1 -> Read, 0 -> Write
 } __packed;
 
 #define MFRC522_SPI_MAX_CLOCK_SPEED 1000000
