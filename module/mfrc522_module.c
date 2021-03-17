@@ -11,7 +11,7 @@ MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 
 static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len, loff_t *offset) {
-    pr_info("[MFRC522] Being written to\n");
+    pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
 
     return len;
 }
@@ -36,9 +36,10 @@ static struct miscdevice mfrc522_misc = {
 
 static int __init mfrc522_init(void)
 {
+    int ret;
 	pr_info("MFRC522 init\r\n");
 
-    int ret = misc_register(&mfrc522_misc);
+    ret = misc_register(&mfrc522_misc);
     if (ret) {
         pr_err("[MFRC522] Misc device initialization failed\n");
         return ret;
