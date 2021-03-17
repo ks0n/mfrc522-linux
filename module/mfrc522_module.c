@@ -27,6 +27,13 @@ static struct spi_driver mfrc522_spi = {
     .probe = mfrc522_spi_probe,
 };
 
+/** Detect if the device we are talking to is an MFRC522 using the VersionReg,
+ * section 9.3.4.8 of the datasheet
+ *
+ * @client SPI device
+ *
+ * @return -1 if not an MFRC522, version number otherwise
+ */
 static int mfrc522_detect(struct spi_device *client)
 {
 	struct address_byte version_reg_read =
@@ -34,11 +41,11 @@ static int mfrc522_detect(struct spi_device *client)
 	char version;
 
 	spi_write(client, &version_reg_read, 1);
-	mdelay(100);
 	spi_read(client, &version, 1);
 
 	switch (version) {
-	case MFRC522_VERSION_1 || MFRC522_VERSION_2:
+	case MFRC522_VERSION_1:
+	case MFRC522_VERSION_2:
 		version = MFRC522_VERSION_NUM(version);
 		pr_info("[MFRC522] MFRC522 version %d detected\n", version);
 		return version;
@@ -60,7 +67,7 @@ static int mfrc522_spi_probe(struct spi_device *client)
 		client->max_speed_hz = MFRC522_SPI_MAX_CLOCK_SPEED;
 	}
 
-	return mfrc522_detect(client);
+	return mfrc522_detect(client) < 0;
 }
 
 static int __init mfrc522_init(void)
