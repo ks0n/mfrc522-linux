@@ -2,6 +2,7 @@
 
 #include <linux/module.h>
 #include <linux/init.h>
+#include <kunit/test.h>
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("ks0n");
@@ -9,6 +10,11 @@ MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 
 static int __init mfrc522_init(void)
 {
+#define MFRC522_TEST
+#ifdef MFRC522_TEST
+    return kunit_run_tests(&mfrc522_test_suite);
+#endif /* !MFRC522_TEST */
+
 	pr_info("MFRC522 init\r\n");
 
 	return 0;
