@@ -20,7 +20,7 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len, 
 
     if (!command) {
         pr_err("[MFRC522] Got invalid command\n");
-        return 1;
+        return len; // FIXME: What should we return here?
     }
 
     pr_info("[MFRC522] Got following command: %d\n", command->cmd);
