@@ -47,7 +47,7 @@ struct mfrc522_command *mfrc522_command_simple_init(u8 cmd);
  * Execute a MFRC522 command and check for its validity
  *
  * @param answer Buffer in which to store the MFRC522's answer
- * @param command Command to send to the MFRC522
+ * @param cmd Command to send to the MFRC522
  *
  * @return The size of the answer on success, -1 on error
  */
