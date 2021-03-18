@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 
 #include "mfrc522_command.h"
+#include "linux/kernel.h"
 #include "linux/slab.h"
+#include "linux/string.h"
+#include "mfrc522_spi.h"
 
 struct mfrc522_command *mfrc522_command_init(u8 cmd, char *data, u8 data_len)
 {
@@ -28,6 +31,14 @@ struct mfrc522_command *mfrc522_command_simple_init(u8 cmd)
 
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 {
+    switch (cmd->cmd) {
+        case MFRC522_CMD_GET_VERSION:
+            sprintf(answer, "%d", mfrc522_get_version());
+            break;
+        default:
+            strcpy(answer, "none");
+    }
+
 	// FIXME: Add logic
 	return 0;
 }

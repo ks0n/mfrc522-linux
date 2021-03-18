@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include "mfrc522_command.h"
 #include <linux/module.h>
 #include <linux/miscdevice.h>
 #include <linux/init.h>
@@ -10,6 +11,13 @@
 #include "mfrc522_parser.h"
 #include "mfrc522_spi.h"
 
+#define MFRC522_VERSION_BASE 0x90
+#define MFRC522_VERSION_1 0x91
+#define MFRC522_VERSION_2 0x92
+#define MFRC522_VERSION_NUM(ver) ((ver)-MFRC522_VERSION_BASE)
+
+#define MFRC522_MAX_ANSWER_SIZE 256 // FIXME
+
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
@@ -17,6 +25,7 @@ MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 			     loff_t *offset)
 {
+	char answer[MFRC522_MAX_ANSWER_SIZE] = { 0 };
 	struct mfrc522_command *command;
 
 	pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
@@ -33,6 +42,10 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 	if (command->data)
 		pr_info("[MFRC522] With extra data: %*.s\n", command->data_len,
 			command->data);
+
+	mfrc522_execute(answer, command);
+
+	pr_info("[MFRC522] Answer: %s\n", answer);
 
 	kfree(command->data);
 	kfree(command);
@@ -60,14 +73,9 @@ static struct miscdevice mfrc522_misc = {
 	.fops = &mfrc522_fops,
 };
 
-#define MFRC522_VERSION_BASE 0x90
-#define MFRC522_VERSION_1 0x91
-#define MFRC522_VERSION_2 0x92
-#define MFRC522_VERSION_NUM(ver) ((ver)-MFRC522_VERSION_BASE)
-
 static int mfrc522_spi_probe(struct spi_device *spi);
 
-static struct spi_driver mfrc522_spi = {
+static struct spi_driver mfrc522_spi_driver = {
 	.driver = {
 		.name = "mfrc522",
 		.owner = THIS_MODULE,
@@ -84,12 +92,7 @@ static struct spi_driver mfrc522_spi = {
  */
 static int mfrc522_detect(struct spi_device *client)
 {
-	struct address_byte version_reg_read =
-		address_byte_build(MFRC522_SPI_READ, MFRC522_VERSION_REG);
-	char version;
-
-	spi_write(client, &version_reg_read, 1);
-	spi_read(client, &version, 1);
+	u8 version = mfrc522_get_version();
 
 	switch (version) {
 	case MFRC522_VERSION_1:
@@ -115,6 +118,9 @@ static int mfrc522_spi_probe(struct spi_device *client)
 		client->max_speed_hz = MFRC522_SPI_MAX_CLOCK_SPEED;
 	}
 
+	// FIXME: Don't register one global clientstruct spi_device *mfrc522_spi;
+	mfrc522_spi = client;
+
 	return mfrc522_detect(client) < 0;
 }
 
@@ -130,7 +136,7 @@ static int __init mfrc522_init(void)
 		return ret;
 	}
 
-	ret = spi_register_driver(&mfrc522_spi);
+	ret = spi_register_driver(&mfrc522_spi_driver);
 	if (ret) {
 		pr_err("[MFRC522] SPI Register failed\r\n");
 		return ret;
@@ -142,7 +148,7 @@ static int __init mfrc522_init(void)
 static void __exit mfrc522_exit(void)
 {
 	misc_deregister(&mfrc522_misc);
-	spi_unregister_driver(&mfrc522_spi);
+	spi_unregister_driver(&mfrc522_spi_driver);
 
 	pr_info("MFRC522 exit\n");
 }
