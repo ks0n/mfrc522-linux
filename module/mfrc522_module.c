@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0
 
 #include "mfrc522_parser.h"
 #include <linux/module.h>

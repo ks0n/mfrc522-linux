@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0 */
 
 #ifndef MFRC522_PARSER_H
 #define MFRC522_PARSER_H
