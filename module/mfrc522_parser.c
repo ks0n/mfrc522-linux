@@ -10,7 +10,7 @@
 #include "mfrc522_parser.h"
 
 #define MFRC522_SEPARATOR ":"
-#define MFRC522_CMD_AMOUNT 3
+#define MFRC522_CMD_AMOUNT 4
 
 struct command {
 	const char *input;
@@ -28,6 +28,9 @@ static struct command commands[MFRC522_CMD_AMOUNT] = {
 	{ .input = "gen_rand_id",
 	  .parameter_amount = 0,
 	  .cmd = MFRC522_CMD_GEN_RANDOM },
+	{ .input = "version",
+	  .parameter_amount = 0,
+	  .cmd = MFRC522_CMD_GET_VERSION },
 };
 
 /**
