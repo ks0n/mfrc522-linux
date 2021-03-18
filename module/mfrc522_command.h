@@ -12,7 +12,7 @@ enum mfrc522_commands {
 
 struct mfrc522_command {
     u8 cmd;
-    u8* data;
+    char* data;
     u8 data_len;
 };
 
@@ -25,7 +25,7 @@ struct mfrc522_command {
  *
  * @return The newly created command
  */
-struct mfrc522_command *mfrc522_command_init(u8 cmd, u8* data, u8 data_len);
+struct mfrc522_command *mfrc522_command_init(u8 cmd, char* data, u8 data_len);
 
 /**
  * Create a new simple MFRC522 without extra data

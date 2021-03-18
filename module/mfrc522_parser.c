@@ -1,3 +1,4 @@
+#include "linux/kernel.h"
 #include "mfrc522_command.h"
 
 #include <linux/string.h>
@@ -35,13 +36,42 @@ struct mfrc522_command *parse_multi_arg(char *input, struct command *cmd) {
     // We only enter this function if arguments have been given to the input
     u8 parameter_amount = 0;
     char *token;
+    char *extra_data;
+    u8 extra_data_len;
+    int ret;
 
     while (input) {
         token = strsep(&input, MFRC522_SEPARATOR);
         parameter_amount++;
+
+        // The first parameter is the extra data
+        if (parameter_amount == 1)
+            extra_data = token;
+
+        // The second parameter is the length of the extr data
+        if (parameter_amount == 2)
+        {
+            ret = kstrtou8(token, 10, &extra_data_len);
+            if (ret == -EINVAL) {
+                pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n", token);
+                return NULL;
+            }
+
+            if (ret == -ERANGE) {
+                pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n", token);
+                return NULL;
+            }
+        }
     }
 
-    return NULL;
+    pr_info("[MFRC522] Found %d parameters for command %s\n", parameter_amount, cmd->input);
+
+    if (parameter_amount != cmd->parameter_amount) {
+        pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got %d\n", cmd->input, cmd->parameter_amount, parameter_amount);
+        return NULL;
+    }
+
+    return mfrc522_command_init(cmd->cmd, extra_data, extra_data_len);
 }
 
 struct mfrc522_command *mfrc522_parse(const char *input, size_t len) {

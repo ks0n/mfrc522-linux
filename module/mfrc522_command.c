@@ -1,7 +1,7 @@
 #include "mfrc522_command.h"
 #include "linux/slab.h"
 
-struct mfrc522_command *mfrc522_command_init(u8 cmd, u8* data, u8 data_len) {
+struct mfrc522_command *mfrc522_command_init(u8 cmd, char* data, u8 data_len) {
     struct mfrc522_command *command = kmalloc(sizeof(struct mfrc522_command), GFP_KERNEL);
     if (!command) {
         pr_err("[MFRC522] Allocation of command (%d, %*.s, %d) failed", cmd, data_len, data, data_len);
