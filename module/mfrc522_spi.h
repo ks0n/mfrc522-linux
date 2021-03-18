@@ -4,6 +4,7 @@
 #define MFRC522_SPI_H
 
 #include <linux/types.h>
+#include <linux/spi/spi.h>
 #include <linux/compiler.h>
 
 struct address_byte {
@@ -19,9 +20,16 @@ struct address_byte {
 
 #define MFRC522_VERSION_REG 0x37
 
+extern struct spi_device *mfrc522_spi;
+
 /**
  * Build a SPI address byte from a given address and a mode
  */
 struct address_byte address_byte_build(u8 mode, u8 addr);
+
+/**
+ * Get the version number of the attached MFRC522
+ */
+u8 mfrc522_get_version(void);
 
 #endif /* !MFRC522_SPI_H */
