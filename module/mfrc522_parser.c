@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0+
+
 #include "linux/kernel.h"
 #include "mfrc522_command.h"
 
@@ -11,123 +13,143 @@
 #define MFRC522_CMD_AMOUNT 3
 
 struct command {
-    const char *input;
-    u8 parameter_amount;
-    u8 cmd;
+	const char *input;
+	u8 parameter_amount;
+	u8 cmd;
 };
 
 static struct command commands[MFRC522_CMD_AMOUNT] = {
-    { .input = "mem_write", .parameter_amount = 2, .cmd = MFRC522_CMD_MEM_WRITE },
-    { .input = "mem_read", .parameter_amount = 0, .cmd = MFRC522_CMD_MEM_READ },
-    { .input = "gen_rand_id", .parameter_amount = 0, .cmd = MFRC522_CMD_GEN_RANDOM },
+	{ .input = "mem_write",
+	  .parameter_amount = 2,
+	  .cmd = MFRC522_CMD_MEM_WRITE },
+	{ .input = "mem_read",
+	  .parameter_amount = 0,
+	  .cmd = MFRC522_CMD_MEM_READ },
+	{ .input = "gen_rand_id",
+	  .parameter_amount = 0,
+	  .cmd = MFRC522_CMD_GEN_RANDOM },
 };
 
-static struct command *cmd_from_token(const char *token) {
-    size_t i;
+static struct command *cmd_from_token(const char *token)
+{
+	size_t i;
 
-    for (i = 0; i < MFRC522_CMD_AMOUNT; i++)
-        if (!strcmp(token, commands[i].input))
-            return &commands[i];
+	for (i = 0; i < MFRC522_CMD_AMOUNT; i++)
+		if (!strcmp(token, commands[i].input))
+			return &commands[i];
 
-    return NULL;
+	return NULL;
 }
 
-struct mfrc522_command *parse_multi_arg(char *input, struct command *cmd) {
-    // We only enter this function if arguments have been given to the input
-    u8 parameter_amount = 0;
-    char *token;
-    char *extra_data;
-    u8 extra_data_len;
-    int ret;
+static struct mfrc522_command *parse_multi_arg(char *input, struct command *cmd)
+{
+	// We only enter this function if arguments have been given to the input
+	u8 parameter_amount = 0;
+	char *token;
+	char *extra_data;
+	u8 extra_data_len;
+	int ret;
 
-    while (input) {
-        token = strsep(&input, MFRC522_SEPARATOR);
-        parameter_amount++;
+	while (input) {
+		token = strsep(&input, MFRC522_SEPARATOR);
+		parameter_amount++;
 
-        // The first parameter is the extra data
-        if (parameter_amount == 1)
-            extra_data = token;
+		// The first parameter is the extra data
+		if (parameter_amount == 1)
+			extra_data = kstrdup(token, GFP_KERNEL);
 
-        // The second parameter is the length of the extr data
-        if (parameter_amount == 2)
-        {
-            ret = kstrtou8(token, 10, &extra_data_len);
-            if (ret == -EINVAL) {
-                pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n", token);
-                return NULL;
-            }
+		// The second parameter is the length of the extr data
+		if (parameter_amount == 2) {
+			ret = kstrtou8(token, 10, &extra_data_len);
+			if (ret == -EINVAL) {
+				pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
+				       token);
+				return NULL;
+			}
 
-            if (ret == -ERANGE) {
-                pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n", token);
-                return NULL;
-            }
-        }
-    }
+			if (ret == -ERANGE) {
+				pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n",
+				       token);
+				return NULL;
+			}
+		}
+	}
 
-    pr_info("[MFRC522] Found %d parameters for command %s\n", parameter_amount, cmd->input);
+	pr_info("[MFRC522] Found %d parameters for command %s\n",
+		parameter_amount, cmd->input);
 
-    if (parameter_amount != cmd->parameter_amount) {
-        pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got %d\n", cmd->input, cmd->parameter_amount, parameter_amount);
-        return NULL;
-    }
+	if (parameter_amount != cmd->parameter_amount) {
+		pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got %d\n",
+		       cmd->input, cmd->parameter_amount, parameter_amount);
+		return NULL;
+	}
 
-    return mfrc522_command_init(cmd->cmd, extra_data, extra_data_len);
+	return mfrc522_command_init(cmd->cmd, extra_data, extra_data_len);
 }
 
-struct mfrc522_command *mfrc522_parse(const char *input, size_t len) {
-    // Inputs are always organized according to the same format
-    //
-    // <cmd>[:<extra_data>:<extra_data_len>]
-    //
-    // Therefore, we will either get a simple command without any colons (in which case
-    // we will only be able to run strsep on the string ONCE) or a command with colons
-    // in which case it is required for the length of the extra data to be present.
-    // Also, since strsep modifies its input, we need to create a copy of the user's
-    // input.
+struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
+{
+	// Inputs are always organized according to the same format
+	//
+	// <cmd>[:<extra_data>:<extra_data_len>]
+	//
+	// Therefore, we will either get a simple command without any colons (in which case
+	// we will only be able to run strsep on the string ONCE) or a command with colons
+	// in which case it is required for the length of the extra data to be present.
+	// Also, since strsep modifies its input, we need to create a copy of the user's
+	// input.
 
-    // The input's length does not account for a terminating NULL, but `strsep` expects
-    // it. Allocate one more byte for the NULL terminator
-    char *input_mut = kmalloc(len + 1, GFP_KERNEL);
-    char *token;
-    struct command *command;
+	// The input's length does not account for a terminating NULL, but `strsep` expects
+	// it. Allocate one more byte for the NULL terminator
+	char *input_mut = kmalloc(len + 1, GFP_KERNEL);
+	char *token;
+	struct command *command;
 
-    if (!input_mut) {
-        pr_err("[MFRC522] Failed to copy user input %*.s\n", len, input);
-        return NULL;
-    }
+	if (!input_mut) {
+		pr_err("[MFRC522] Failed to copy user input %*.s\n", len,
+		       input);
+		return NULL;
+	}
 
-    // `strlcpy`, while being the safer version, expects a NULL-terminated string as source.
-    // However, the kernel does not NULL-terminate the user's input
-    strncpy(input_mut, input, len);
+	// `strlcpy`, while being the safer version, expects a NULL-terminated string as source.
+	// However, the kernel does not NULL-terminate the user's input
+	strncpy(input_mut, input, len);
 
-    input_mut[len] = '\0';
+	input_mut[len] = '\0';
 
-    token = strsep(&input_mut, MFRC522_SEPARATOR);
-    command = cmd_from_token(token);
+	token = strsep(&input_mut, MFRC522_SEPARATOR);
+	command = cmd_from_token(token);
 
-    // The command does not exist
-    if (!command) {
-        pr_err("[MFRC522] Invalid command: %s: Does not exist\n", token);
-        return NULL;
-    }
+	// The command does not exist
+	if (!command) {
+		pr_err("[MFRC522] Invalid command: %s: Does not exist\n",
+		       token);
+		goto error;
+	}
 
-    // Now, two cases are possible: If we didn't find a colon, strsep will nullify our
-    // original pointer (input_mut). If we found one, then input_mut is still valid
-    if (!input_mut) {
-        if (command->parameter_amount != 0) {
-            pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got 0\n", input, command->parameter_amount);
-            return NULL;
-        }
+	// Now, two cases are possible: If we didn't find a colon, strsep will nullify our
+	// original pointer (input_mut). If we found one, then input_mut is still valid
+	if (!input_mut) {
+		if (command->parameter_amount != 0) {
+			pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got 0\n",
+			       input, command->parameter_amount);
+			goto error;
+		}
 
-        return mfrc522_command_simple_init(command->cmd);
-    }
+		return mfrc522_command_simple_init(command->cmd);
+	}
 
-    // If `input_mut` is not NULL, then we have found colons. However, we might have
-    // also found a command that does not expect any arguments
-    if (command->parameter_amount == 0) {
-        pr_err("[MFRC522] Invalid command: %s: Expected 0 arguments but found some\n", token);
-        return NULL;
-    }
+	// If `input_mut` is not NULL, then we have found colons. However, we might have
+	// also found a command that does not expect any arguments
+	if (command->parameter_amount == 0) {
+		pr_err("[MFRC522] Invalid command: %s: Expected 0 arguments but found some\n",
+		       token);
+		goto error;
+	}
 
-    return parse_multi_arg(input_mut, command);
+	return parse_multi_arg(input_mut, command);
+
+error:
+	kfree(input_mut);
+	return NULL;
 }

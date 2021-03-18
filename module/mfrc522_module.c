@@ -11,61 +11,70 @@ MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 
-static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len, loff_t *offset) {
-    struct mfrc522_command *command;
+static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
+			     loff_t *offset)
+{
+	struct mfrc522_command *command;
 
-    pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
+	pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
 
-    command = mfrc522_parse(buffer, len);
+	command = mfrc522_parse(buffer, len);
 
-    if (!command) {
-        pr_err("[MFRC522] Got invalid command\n");
-        return len; // FIXME: What should we return here?
-    }
+	if (!command) {
+		pr_err("[MFRC522] Got invalid command\n");
+		return len; // FIXME: What should we return here?
+	}
 
-    pr_info("[MFRC522] Got following command: %d\n", command->cmd);
+	pr_info("[MFRC522] Got following command: %d\n", command->cmd);
 
-    if (command->data)
-        pr_info("[MFRC522] With extra data: %*.s\n", command->data_len, command->data);
+	if (command->data)
+		pr_info("[MFRC522] With extra data: %*.s\n", command->data_len,
+			command->data);
 
-    return len;
+	kfree(command->data);
+	kfree(command);
+
+	return len;
 }
 
-static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len, loff_t *offset) {
-    pr_info("[MFRC522] Being read\n");
+static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len,
+			    loff_t *offset)
+{
+	pr_info("[MFRC522] Being read\n");
 
-    return len;
+	return len;
 }
 
 static const struct file_operations mfrc522_fops = {
-    .owner = THIS_MODULE,
-    .write = mfrc522_write,
-    .read = mfrc522_read,
+	.owner = THIS_MODULE,
+	.write = mfrc522_write,
+	.read = mfrc522_read,
 };
 
 static struct miscdevice mfrc522_misc = {
-    .minor = MISC_DYNAMIC_MINOR,
-    .name = "mfrc522_misc",
-    .fops = &mfrc522_fops,
+	.minor = MISC_DYNAMIC_MINOR,
+	.name = "mfrc522_misc",
+	.fops = &mfrc522_fops,
 };
 
 static int __init mfrc522_init(void)
 {
-    int ret;
+	int ret;
+
 	pr_info("MFRC522 init\r\n");
 
-    ret = misc_register(&mfrc522_misc);
-    if (ret) {
-        pr_err("[MFRC522] Misc device initialization failed\n");
-        return ret;
-    }
+	ret = misc_register(&mfrc522_misc);
+	if (ret) {
+		pr_err("[MFRC522] Misc device initialization failed\n");
+		return ret;
+	}
 
 	return 0;
 }
 
 static void __exit mfrc522_exit(void)
 {
-    misc_deregister(&mfrc522_misc);
+	misc_deregister(&mfrc522_misc);
 	pr_info("MFRC522 exit\r\n");
 }
 
