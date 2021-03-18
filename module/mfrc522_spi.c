@@ -28,5 +28,5 @@ u8 mfrc522_get_version(void)
 	spi_write(mfrc522_spi, &version_reg_read, 1);
 	spi_read(mfrc522_spi, &version, 1);
 
-    return version;
+	return version;
 }

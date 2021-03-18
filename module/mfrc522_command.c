@@ -31,13 +31,13 @@ struct mfrc522_command *mfrc522_command_simple_init(u8 cmd)
 
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 {
-    switch (cmd->cmd) {
-        case MFRC522_CMD_GET_VERSION:
-            sprintf(answer, "%d", mfrc522_get_version());
-            break;
-        default:
-            strcpy(answer, "none");
-    }
+	switch (cmd->cmd) {
+	case MFRC522_CMD_GET_VERSION:
+		sprintf(answer, "%d", mfrc522_get_version());
+		break;
+	default:
+		strcpy(answer, "none");
+	}
 
 	// FIXME: Add logic
 	return 0;
