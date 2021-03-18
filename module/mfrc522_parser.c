@@ -30,6 +30,14 @@ static struct command commands[MFRC522_CMD_AMOUNT] = {
 	  .cmd = MFRC522_CMD_GEN_RANDOM },
 };
 
+/**
+ * Get the command associated with a command name
+ *
+ * @param token Command name found during parsing
+ *
+ * @return Return a pointer to a command declared in the commands array, or NULL if no
+ *         command matched the input
+ */
 static struct command *cmd_from_token(const char *token)
 {
 	size_t i;
@@ -41,6 +49,14 @@ static struct command *cmd_from_token(const char *token)
 	return NULL;
 }
 
+/**
+ * Parse a command with multiple arguments
+ *
+ * @param input Remaining user input, mutable and allocated via kmalloc() in mfrc522_parse()
+ * @param cmd Command returned by cmd_from_token()
+ *
+ * @return A complete MFRC522 command with allocated memory for the extra data
+ */
 static struct mfrc522_command *parse_multi_arg(char *input, struct command *cmd)
 {
 	// We only enter this function if arguments have been given to the input
@@ -64,13 +80,13 @@ static struct mfrc522_command *parse_multi_arg(char *input, struct command *cmd)
 			if (ret == -EINVAL) {
 				pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
 				       token);
-				return NULL;
+				goto err;
 			}
 
 			if (ret == -ERANGE) {
 				pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n",
 				       token);
-				return NULL;
+				goto err;
 			}
 		}
 	}
@@ -81,10 +97,14 @@ static struct mfrc522_command *parse_multi_arg(char *input, struct command *cmd)
 	if (parameter_amount != cmd->parameter_amount) {
 		pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got %d\n",
 		       cmd->input, cmd->parameter_amount, parameter_amount);
-		return NULL;
+		goto err;
 	}
 
 	return mfrc522_command_init(cmd->cmd, extra_data, extra_data_len);
+
+err:
+	kfree(extra_data);
+	return NULL;
 }
 
 struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
