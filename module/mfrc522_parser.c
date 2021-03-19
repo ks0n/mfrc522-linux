@@ -74,12 +74,8 @@ static struct mfrc522_command *parse_multi_arg(char *input,
 		token = strsep(&input, MFRC522_SEPARATOR);
 		parameter_amount++;
 
-		// The first parameter is the extra data
-		if (parameter_amount == 1)
-			extra_data = kstrdup(token, GFP_KERNEL);
-
 		// The second parameter is the length of the extr data
-		if (parameter_amount == 2) {
+		if (parameter_amount == 1) {
 			ret = kstrtou8(token, 10, &extra_data_len);
 			if (ret == -EINVAL) {
 				pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
@@ -93,6 +89,10 @@ static struct mfrc522_command *parse_multi_arg(char *input,
 				goto err;
 			}
 		}
+
+		// The first parameter is the extra data
+		if (parameter_amount == 2)
+			extra_data = kstrdup(token, GFP_KERNEL);
 	}
 
 	pr_info("[MFRC522] Found %d parameters for command %s\n",
@@ -115,7 +115,7 @@ struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
 {
 	// Inputs are always organized according to the same format
 	//
-	// <cmd>[:<extra_data>:<extra_data_len>]
+	// <cmd>[:<extra_data_len>:<extra_data>]
 	//
 	// Therefore, we will either get a simple command without any colons (in which case
 	// we will only be able to run strsep on the string ONCE) or a command with colons
