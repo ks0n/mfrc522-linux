@@ -11,6 +11,7 @@
 
 #define MFRC522_SEPARATOR ":"
 #define MFRC522_CMD_AMOUNT 4
+#define MFRC522_MAX_DATA_LEN 25
 
 struct command {
 	const char *input;
@@ -74,7 +75,7 @@ static struct mfrc522_command *parse_multi_arg(char *input,
 		token = strsep(&input, MFRC522_SEPARATOR);
 		parameter_amount++;
 
-		// The second parameter is the length of the extr data
+		// The first parameter is the length of the extra data
 		if (parameter_amount == 1) {
 			ret = kstrtou8(token, 10, &extra_data_len);
 			if (ret == -EINVAL) {
@@ -88,9 +89,15 @@ static struct mfrc522_command *parse_multi_arg(char *input,
 				       token);
 				goto err;
 			}
+
+			if (extra_data_len > MFRC522_MAX_DATA_LEN) {
+				pr_err("[MFRC522] Invalid parameter for Data length: Length %d is too important (max length: 25)\n",
+				       extra_data_len);
+				goto err;
+			}
 		}
 
-		// The first parameter is the extra data
+		// The second parameter is the extra data
 		if (parameter_amount == 2)
 			extra_data = kstrdup(token, GFP_KERNEL);
 	}
