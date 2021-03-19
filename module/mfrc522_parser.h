@@ -10,15 +10,13 @@
 /**
  * Parse and check input sent to the MFRC522. Return the command asked by the user
  *
- * @warn The command needs to be free by the caller using kfree(). If present, the command's
- * extra data needs to be kfree'd as well
- *
+ * @param cmd Command struct to fill up
  * @param input User string input. Should be colon separated according to a specific
  *              format
  * @param len Length of the input
  *
- * @return The required command on success, NULL otherwise
+ * @return 0 on success, a negative number otherwise
  */
-struct mfrc522_command *mfrc522_parse(const char *input, size_t len);
+int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len);
 
 #endif /* !MFRC522_PARSER_H */

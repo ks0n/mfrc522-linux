@@ -11,7 +11,6 @@
 
 #define MFRC522_SEPARATOR ":"
 #define MFRC522_CMD_AMOUNT 4
-#define MFRC522_MAX_DATA_LEN 25
 
 struct command {
 	const char *input;
@@ -56,13 +55,14 @@ static const struct command *cmd_from_token(const char *token)
 /**
  * Parse a command with multiple arguments
  *
+ * @param cmd Command struct to fill up
  * @param input Remaining user input, mutable and allocated via kmalloc() in mfrc522_parse()
- * @param cmd Command returned by cmd_from_token()
+ * @param ref_cmd Reference command returned by cmd_from_token()
  *
- * @return A complete MFRC522 command with allocated memory for the extra data
+ * @return 0 on success, a negative number otherwise
  */
-static struct mfrc522_command *parse_multi_arg(char *input,
-					       const struct command *cmd)
+static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
+			   const struct command *ref_cmd)
 {
 	// We only enter this function if arguments have been given to the input
 	u8 parameter_amount = 0;
@@ -81,44 +81,42 @@ static struct mfrc522_command *parse_multi_arg(char *input,
 			if (ret == -EINVAL) {
 				pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
 				       token);
-				goto err;
+				return ret;
 			}
 
 			if (ret == -ERANGE) {
 				pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n",
 				       token);
-				goto err;
+				return ret;
 			}
 
 			if (extra_data_len > MFRC522_MAX_DATA_LEN) {
 				pr_err("[MFRC522] Invalid parameter for Data length: Length %d is too important (max length: 25)\n",
 				       extra_data_len);
-				goto err;
+				return -1;
 			}
 		}
 
 		// The second parameter is the extra data
 		if (parameter_amount == 2)
-			extra_data = kstrdup(token, GFP_KERNEL);
+			extra_data = token;
 	}
 
 	pr_info("[MFRC522] Found %d parameters for command %s\n",
-		parameter_amount, cmd->input);
+		parameter_amount, ref_cmd->input);
 
-	if (parameter_amount != cmd->parameter_amount) {
+	if (parameter_amount != ref_cmd->parameter_amount) {
 		pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got %d\n",
-		       cmd->input, cmd->parameter_amount, parameter_amount);
-		goto err;
+		       ref_cmd->input, ref_cmd->parameter_amount,
+		       parameter_amount);
+		return -2;
 	}
 
-	return mfrc522_command_init(cmd->cmd, extra_data, extra_data_len);
-
-err:
-	kfree(extra_data);
-	return NULL;
+	return mfrc522_command_init(cmd, ref_cmd->cmd, extra_data,
+				    extra_data_len);
 }
 
-struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
+int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 {
 	// Inputs are always organized according to the same format
 	//
@@ -139,7 +137,7 @@ struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
 	if (!input_mut) {
 		pr_err("[MFRC522] Failed to copy user input %*.s\n", len,
 		       input);
-		return NULL;
+		return -1;
 	}
 
 	// `strlcpy`, while being the safer version, expects a NULL-terminated string as source.
@@ -167,7 +165,7 @@ struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
 			goto error;
 		}
 
-		return mfrc522_command_simple_init(command->cmd);
+		return mfrc522_command_simple_init(cmd, command->cmd);
 	}
 
 	// If `input_mut` is not NULL, then we have found colons. However, we might have
@@ -178,9 +176,9 @@ struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
 		goto error;
 	}
 
-	return parse_multi_arg(input_mut, command);
+	return parse_multi_arg(cmd, input_mut, command);
 
 error:
 	kfree(input_mut);
-	return NULL;
+	return -1;
 }

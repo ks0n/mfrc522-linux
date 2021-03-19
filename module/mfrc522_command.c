@@ -6,27 +6,33 @@
 #include "linux/string.h"
 #include "mfrc522_spi.h"
 
-struct mfrc522_command *mfrc522_command_init(u8 cmd, char *data, u8 data_len)
+int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
+			 u8 data_len)
 {
-	struct mfrc522_command *command =
-		kmalloc(sizeof(struct mfrc522_command), GFP_KERNEL);
-	if (!command) {
-		pr_err("[MFRC522] Allocation of command (%d, %*.s, %d) failed",
-		       cmd, data_len, data, data_len);
-
-		return NULL;
+	if (data_len > MFRC522_MAX_DATA_LEN) {
+		pr_err("[MFRC522] Invalid length for command: Got %d, expected length inferior to 25\n",
+		       data_len);
+		return -1;
 	}
 
-	command->cmd = cmd;
-	command->data = data;
-	command->data_len = data_len;
+	if (!cmd) {
+		pr_err("[MFRC522] Invalid command to initialize: NULL\n");
+		return -2;
+	}
 
-	return command;
+	cmd->cmd = cmd_byte;
+	cmd->data_len = data_len;
+
+	// Copy the user's extra data into the command, and zero out the remaining bytes
+	strncpy(cmd->data, data, data_len);
+	memset(cmd->data + data_len, '\0', MFRC522_MAX_DATA_LEN - data_len);
+
+	return 0;
 }
 
-struct mfrc522_command *mfrc522_command_simple_init(u8 cmd)
+int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
 {
-	return mfrc522_command_init(cmd, NULL, 0);
+	return mfrc522_command_init(cmd, cmd_byte, NULL, 0);
 }
 
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)

@@ -5,6 +5,8 @@
 
 #include <linux/types.h>
 
+#define MFRC522_MAX_DATA_LEN 25
+
 enum mfrc522_commands {
 	MFRC522_CMD_MEM_WRITE = 0x00,
 	MFRC522_CMD_MEM_READ,
@@ -14,34 +16,32 @@ enum mfrc522_commands {
 
 struct mfrc522_command {
 	u8 cmd;
-	char *data;
 	u8 data_len;
+	char data[MFRC522_MAX_DATA_LEN];
 };
 
 /**
  * Create a new MFRC522 command without checking for its validity
  *
- * @warn The caller must free the command using kfree(). Ownership of the `data` pointer
- * is left to the user
- *
- * @param cmd Command to use, as defined in the MFRC522_CMD_* macros
+ * @param cmd Command struct to initialize
+ * @param cmd_byte Command to use, as defined in the MFRC522_CMD_* macros
  * @param data (Optional) Extra data to send alongside the command itself
  * @param data_len (Optional) Length of the extra data to send
  *
- * @return The newly created command
+ * @return 0 on success, a negative number otherwise
  */
-struct mfrc522_command *mfrc522_command_init(u8 cmd, char *data, u8 data_len);
+int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
+			 u8 data_len);
 
 /**
  * Create a new simple MFRC522 without extra data
  *
- * @warn The caller must free the command using kfree()
+ * @param cmd Command struct to initialize
+ * @param cmd_byte Command to use, as defined in the MFRC522_CMD_* macros
  *
- * @param cmd Command to use, as defined in the MFRC522_CMD_* macros
- *
- * @return The newly created command
+ * @return 0 on success, a negative number otherwise
  */
-struct mfrc522_command *mfrc522_command_simple_init(u8 cmd);
+int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte);
 
 /**
  * Execute a MFRC522 command and check for its validity

@@ -25,30 +25,28 @@ MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 			     loff_t *offset)
 {
+	int ret;
 	char answer[MFRC522_MAX_ANSWER_SIZE] = { 0 };
-	struct mfrc522_command *command;
+	struct mfrc522_command command = { 0 };
 
 	pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
 
-	command = mfrc522_parse(buffer, len);
+	ret = mfrc522_parse(&command, buffer, len);
 
-	if (!command) {
+	if (ret) {
 		pr_err("[MFRC522] Got invalid command\n");
 		return len; // FIXME: What should we return here?
 	}
 
-	pr_info("[MFRC522] Got following command: %d\n", command->cmd);
+	pr_info("[MFRC522] Got following command: %d\n", command.cmd);
 
-	if (command->data)
-		pr_info("[MFRC522] With extra data: %*.s\n", command->data_len,
-			command->data);
+	if (command.data_len)
+		pr_info("[MFRC522] With extra data: %*.s\n", command.data_len,
+			command.data);
 
-	mfrc522_execute(answer, command);
+	mfrc522_execute(answer, &command);
 
 	pr_info("[MFRC522] Answer: %s\n", answer);
-
-	kfree(command->data);
-	kfree(command);
 
 	return len;
 }
