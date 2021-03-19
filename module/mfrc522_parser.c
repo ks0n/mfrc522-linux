@@ -18,7 +18,7 @@ struct command {
 	u8 cmd;
 };
 
-static struct command commands[MFRC522_CMD_AMOUNT] = {
+static const struct command commands[MFRC522_CMD_AMOUNT] = {
 	{ .input = "mem_write",
 	  .parameter_amount = 2,
 	  .cmd = MFRC522_CMD_MEM_WRITE },
@@ -41,7 +41,7 @@ static struct command commands[MFRC522_CMD_AMOUNT] = {
  * @return Return a pointer to a command declared in the commands array, or NULL if no
  *         command matched the input
  */
-static struct command *cmd_from_token(const char *token)
+static const struct command *cmd_from_token(const char *token)
 {
 	size_t i;
 
@@ -60,7 +60,8 @@ static struct command *cmd_from_token(const char *token)
  *
  * @return A complete MFRC522 command with allocated memory for the extra data
  */
-static struct mfrc522_command *parse_multi_arg(char *input, struct command *cmd)
+static struct mfrc522_command *parse_multi_arg(char *input,
+					       const struct command *cmd)
 {
 	// We only enter this function if arguments have been given to the input
 	u8 parameter_amount = 0;
@@ -126,7 +127,7 @@ struct mfrc522_command *mfrc522_parse(const char *input, size_t len)
 	// it. Allocate one more byte for the NULL terminator
 	char *input_mut = kmalloc(len + 1, GFP_KERNEL);
 	char *token;
-	struct command *command;
+	const struct command *command;
 
 	if (!input_mut) {
 		pr_err("[MFRC522] Failed to copy user input %*.s\n", len,
