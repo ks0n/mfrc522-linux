@@ -12,6 +12,7 @@
 #define MFRC522_SEPARATOR ":"
 #define MFRC522_CMD_AMOUNT 4
 #define MFRC522_MAX_INPUT_LEN 255
+#define MFRC522_MAX_PARAMETER_AMOUNT 2
 
 struct driver_command {
 	const char *input;
@@ -96,11 +97,15 @@ static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
 				       extra_data_len);
 				return -1;
 			}
-		}
-
-		// The second parameter is the extra data
-		if (parameter_amount == 2)
+		} else if (parameter_amount == 2) {
+			// The second parameter is the extra data
 			extra_data = token;
+		} else {
+			// Any parameters after the second one is an error
+			pr_err("[MFRC522] Invalid number of parameters: Got at least 3, which is more than the maximum of %d",
+			       MFRC522_MAX_PARAMETER_AMOUNT);
+			return -1;
+		}
 	}
 
 	pr_info("[MFRC522] Found %d parameters for command %s\n",
