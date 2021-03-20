@@ -153,7 +153,7 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	if (!command) {
 		pr_err("[MFRC522] Invalid command: %s: Does not exist\n",
 		       token);
-		goto error;
+		return -1;
 	}
 
 	// Now, two cases are possible: If we didn't find a colon, strsep will nullify our
@@ -161,23 +161,12 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	if (!input_mut) {
 		if (command->parameter_amount != 0) {
 			pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got 0\n",
-			       input, command->parameter_amount);
-			goto error;
+			       token, command->parameter_amount);
+			return -2;
 		}
 
 		return mfrc522_command_simple_init(cmd, command->cmd);
 	}
 
-	// If `input_mut` is not NULL, then we have found colons. However, we might have
-	// also found a command that does not expect any arguments
-	if (command->parameter_amount == 0) {
-		pr_err("[MFRC522] Invalid command: %s: Expected 0 arguments but found some\n",
-		       token);
-		goto error;
-	}
-
 	return parse_multi_arg(cmd, input_mut, command);
-
-error:
-	return -1;
 }
