@@ -11,6 +11,7 @@
 
 #define MFRC522_SEPARATOR ":"
 #define MFRC522_CMD_AMOUNT 4
+#define MFRC522_MAX_INPUT_LEN 255
 
 struct command {
 	const char *input;
@@ -130,21 +131,20 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 
 	// The input's length does not account for a terminating NULL, but `strsep` expects
 	// it. Allocate one more byte for the NULL terminator
-	char *input_mut = kmalloc(len + 1, GFP_KERNEL);
+	char input_cpy[MFRC522_MAX_INPUT_LEN + 1] = { 0 };
+	char *input_mut = &input_cpy[0];
 	char *token;
 	const struct command *command;
 
-	if (!input_mut) {
-		pr_err("[MFRC522] Failed to copy user input %*.s\n", len,
-		       input);
+	if (len > MFRC522_MAX_INPUT_LEN) {
+		pr_err("[MFRC522] Invalid input length: Max is %d, got %d\n",
+		       MFRC522_MAX_INPUT_LEN, len);
 		return -1;
 	}
 
 	// `strlcpy`, while being the safer version, expects a NULL-terminated string as source.
 	// However, the kernel does not NULL-terminate the user's input
-	strncpy(input_mut, input, len);
-
-	input_mut[len] = '\0';
+	strncpy(input_cpy, input, len);
 
 	token = strsep(&input_mut, MFRC522_SEPARATOR);
 	command = cmd_from_token(token);
@@ -179,6 +179,5 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	return parse_multi_arg(cmd, input_mut, command);
 
 error:
-	kfree(input_mut);
 	return -1;
 }
