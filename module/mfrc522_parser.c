@@ -13,13 +13,13 @@
 #define MFRC522_CMD_AMOUNT 4
 #define MFRC522_MAX_INPUT_LEN 255
 
-struct command {
+struct driver_command {
 	const char *input;
 	u8 parameter_amount;
 	u8 cmd;
 };
 
-static const struct command commands[MFRC522_CMD_AMOUNT] = {
+static const struct driver_command commands[MFRC522_CMD_AMOUNT] = {
 	{ .input = "mem_write",
 	  .parameter_amount = 2,
 	  .cmd = MFRC522_CMD_MEM_WRITE },
@@ -42,7 +42,7 @@ static const struct command commands[MFRC522_CMD_AMOUNT] = {
  * @return Return a pointer to a command declared in the commands array, or NULL if no
  *         command matched the input
  */
-static const struct command *cmd_from_token(const char *token)
+static const struct driver_command *find_cmd_from_token(const char *token)
 {
 	size_t i;
 
@@ -58,12 +58,12 @@ static const struct command *cmd_from_token(const char *token)
  *
  * @param cmd Command struct to fill up
  * @param input Remaining user input, mutable and allocated via kmalloc() in mfrc522_parse()
- * @param ref_cmd Reference command returned by cmd_from_token()
+ * @param ref_cmd Reference command returned by find_cmd_from_token()
  *
  * @return 0 on success, a negative number otherwise
  */
 static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
-			   const struct command *ref_cmd)
+			   const struct driver_command *ref_cmd)
 {
 	// We only enter this function if arguments have been given to the input
 	u8 parameter_amount = 0;
@@ -134,7 +134,7 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	char input_cpy[MFRC522_MAX_INPUT_LEN + 1] = { 0 };
 	char *input_mut = &input_cpy[0];
 	char *token;
-	const struct command *command;
+	const struct driver_command *command;
 
 	if (len > MFRC522_MAX_INPUT_LEN) {
 		pr_err("[MFRC522] Invalid input length: Max is %d, got %d\n",
@@ -147,7 +147,7 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	strncpy(input_cpy, input, len);
 
 	token = strsep(&input_mut, MFRC522_SEPARATOR);
-	command = cmd_from_token(token);
+	command = find_cmd_from_token(token);
 
 	// The command does not exist
 	if (!command) {
