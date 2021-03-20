@@ -138,7 +138,7 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	// it. Allocate one more byte for the NULL terminator
 	char input_cpy[MFRC522_MAX_INPUT_LEN + 1] = { 0 };
 	char *input_mut = &input_cpy[0];
-	char *token;
+	char *cmd_name;
 	const struct driver_command *command;
 
 	if (len > MFRC522_MAX_INPUT_LEN) {
@@ -151,13 +151,13 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	// However, the kernel does not NULL-terminate the user's input
 	strncpy(input_cpy, input, len);
 
-	token = strsep(&input_mut, MFRC522_SEPARATOR);
-	command = find_cmd_from_token(token);
+	cmd_name = strsep(&input_mut, MFRC522_SEPARATOR);
+	command = find_cmd_from_token(cmd_name);
 
 	// The command does not exist
 	if (!command) {
 		pr_err("[MFRC522] Invalid command: %s: Does not exist\n",
-		       token);
+		       cmd_name);
 		return -1;
 	}
 
@@ -166,7 +166,7 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	if (!input_mut) {
 		if (command->parameter_amount != 0) {
 			pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got 0\n",
-			       token, command->parameter_amount);
+			       cmd_name, command->parameter_amount);
 			return -2;
 		}
 
