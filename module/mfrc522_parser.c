@@ -137,7 +137,7 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	// The input's length does not account for a terminating NULL, but `strsep` expects
 	// it. Allocate one more byte for the NULL terminator
 	char input_cpy[MFRC522_MAX_INPUT_LEN + 1] = { 0 };
-	char *input_mut = &input_cpy[0];
+	char *input_mut = input_cpy;
 	char *cmd_name;
 	const struct driver_command *command;
 
