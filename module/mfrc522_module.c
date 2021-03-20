@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
-#include "mfrc522_command.h"
+#include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/miscdevice.h>
 #include <linux/init.h>
@@ -8,6 +8,7 @@
 #include <linux/regmap.h>
 #include <linux/fs.h>
 
+#include "mfrc522_command.h"
 #include "mfrc522_parser.h"
 #include "mfrc522_spi.h"
 
@@ -35,7 +36,7 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 
 	if (ret) {
 		pr_err("[MFRC522] Got invalid command\n");
-		return len; // FIXME: What should we return here?
+		return -EBADMSG;
 	}
 
 	pr_info("[MFRC522] Got following command: %d\n", command.cmd);
