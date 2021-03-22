@@ -38,10 +38,9 @@ static int mfrc522_detect(struct spi_device *client)
 {
 	struct address_byte version_reg_read =
 		address_byte_build(MFRC522_SPI_READ, MFRC522_VERSION_REG);
-	char version;
+	u8 version;
 
-	spi_write(client, &version_reg_read, 1);
-	spi_read(client, &version, 1);
+	version = mfrc522_register_read(client, MFRC522_VERSION_REG);
 
 	switch (version) {
 	case MFRC522_VERSION_1:
