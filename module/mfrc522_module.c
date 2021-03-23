@@ -8,7 +8,7 @@
 #include <linux/regmap.h>
 #include <linux/fs.h>
 
-#include "mfrc522_command.h"
+#include "mfrc522_user_command.h"
 #include "mfrc522_parser.h"
 #include "mfrc522_spi.h"
 

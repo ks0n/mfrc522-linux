@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
 #include "linux/kernel.h"
-#include "mfrc522_command.h"
+#include "mfrc522_user_command.h"
 
 #include <linux/string.h>
 #include <linux/slab.h>
