@@ -53,3 +53,4 @@ u8 mfrc522_register_read(struct spi_device *client, u8 reg);
 void mfrc522_register_write(struct spi_device *client, u8 reg, u8 value);
 
 #endif /* !MFRC522_SPI_H */
+
