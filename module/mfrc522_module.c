@@ -42,7 +42,7 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 	pr_info("[MFRC522] Got following command: %d\n", command.cmd);
 
 	if (command.data_len)
-		pr_info("[MFRC522] With extra data: %*.s\n", command.data_len,
+		pr_info("[MFRC522] With extra data: `%*.s`\n", command.data_len,
 			command.data);
 
 	mfrc522_execute(answer, &command);

@@ -66,60 +66,46 @@ static const struct driver_command *find_cmd_from_token(const char *token)
 static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
 			   const struct driver_command *ref_cmd)
 {
-	// We only enter this function if arguments have been given to the input
-	u8 parameter_amount = 0;
-	char *token;
-	char *extra_data;
 	u8 extra_data_len;
+	char *extra_data;
+	char *token;
 	int ret;
 
-	while (input) {
-		token = strsep(&input, MFRC522_SEPARATOR);
-		parameter_amount++;
+	token = strsep(&input, MFRC522_SEPARATOR);
+	ret = kstrtou8(token, 10, &extra_data_len);
 
-		// The first parameter is the length of the extra data
-		if (parameter_amount == 1) {
-			ret = kstrtou8(token, 10, &extra_data_len);
-			if (ret == -EINVAL) {
-				pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
-				       token);
-				return ret;
-			}
+	// The remaining user input is the extra data
+	extra_data = input;
 
-			if (ret == -ERANGE) {
-				pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n",
-				       token);
-				return ret;
-			}
-
-			if (extra_data_len > MFRC522_MAX_DATA_LEN) {
-				pr_err("[MFRC522] Invalid parameter for Data length: Length %d is too important (max length: 25)\n",
-				       extra_data_len);
-				return -1;
-			}
-		} else if (parameter_amount == 2) {
-			// The second parameter is the extra data
-			extra_data = token;
-		} else {
-			// Any parameters after the second one is an error
-			pr_err("[MFRC522] Invalid number of parameters: Got at least 3, which is more than the maximum of %d",
-			       MFRC522_MAX_PARAMETER_AMOUNT);
-			return -1;
-		}
+	if (ret == -EINVAL) {
+		pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
+				token);
+		return ret;
 	}
 
-	pr_info("[MFRC522] Found %d parameters for command %s\n",
-		parameter_amount, ref_cmd->input);
+	if (ret == -ERANGE) {
+		pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n",
+				token);
+		return ret;
+	}
 
-	if (parameter_amount != ref_cmd->parameter_amount) {
-		pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got %d\n",
-		       ref_cmd->input, ref_cmd->parameter_amount,
-		       parameter_amount);
-		return -2;
+	if (extra_data_len > MFRC522_MAX_DATA_LEN) {
+		pr_err("[MFRC522] Invalid parameter for Data length: Length %d is too important (max length: 25)\n",
+				extra_data_len);
+		return -1;
+	}
+
+	// We haven't found a semicolon in the user's input. Therefore, we're in
+	// a case where we have a length, but no data. This is an invalid amount
+	// of parameters
+	if (!extra_data) {
+		pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got 1\n",
+				ref_cmd->input, ref_cmd->parameter_amount);
+		return -1;
 	}
 
 	return mfrc522_command_init(cmd, ref_cmd->cmd, extra_data,
-				    extra_data_len);
+			extra_data_len);
 }
 
 int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
