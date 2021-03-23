@@ -19,17 +19,7 @@ struct address_byte address_byte_build(u8 mode, u8 addr)
 
 u8 mfrc522_get_version(void)
 {
-	struct address_byte version_reg_read =
-		address_byte_build(MFRC522_SPI_READ, MFRC522_VERSION_REG);
-	u8 version;
-
-	if (!mfrc522_spi)
-		return 0;
-
-	spi_write(mfrc522_spi, &version_reg_read, 1);
-	spi_read(mfrc522_spi, &version, 1);
-
-	return version;
+	return mfrc522_register_read(mfrc522_spi, MFRC522_VERSION_REG);
 }
 
 u8 mfrc522_register_read(struct spi_device *client, u8 reg)
