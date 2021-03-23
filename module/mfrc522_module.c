@@ -28,6 +28,7 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 {
 	int ret;
 	char answer[MFRC522_MAX_ANSWER_SIZE] = { 0 };
+	int answer_size;
 	struct mfrc522_command command = { 0 };
 
 	pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
@@ -45,9 +46,9 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 		pr_info("[MFRC522] With extra data: `%*.s`\n", command.data_len,
 			command.data);
 
-	mfrc522_execute(answer, &command);
+	answer_size = mfrc522_execute(answer, &command);
 
-	pr_info("[MFRC522] Answer: %s\n", answer);
+	pr_info("[MFRC522] Answer: %*.s\n", answer_size, answer);
 
 	return len;
 }
