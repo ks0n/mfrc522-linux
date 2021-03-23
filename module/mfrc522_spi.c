@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/spi/spi.h>
+#include <linux/string.h>
+
 #include "mfrc522_spi.h"
 
-#include <linux/string.h>
+struct spi_device *mfrc522_spi;
 
 struct address_byte address_byte_build(u8 mode, u8 addr)
 {
@@ -12,6 +15,11 @@ struct address_byte address_byte_build(u8 mode, u8 addr)
 	};
 
 	return byte;
+}
+
+u8 mfrc522_get_version(void)
+{
+	return mfrc522_register_read(mfrc522_spi, MFRC522_VERSION_REG);
 }
 
 u8 mfrc522_register_read(struct spi_device *client, u8 reg)
