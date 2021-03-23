@@ -5,7 +5,7 @@
 
 #include <linux/types.h>
 
-#include "mfrc522_command.h"
+#include "mfrc522_user_command.h"
 
 /**
  * Parse and check input sent to the MFRC522. Return the command asked by the user
