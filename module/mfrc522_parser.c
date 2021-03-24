@@ -10,7 +10,7 @@
 #include "mfrc522_parser.h"
 
 #define MFRC522_SEPARATOR ":"
-#define MFRC522_CMD_AMOUNT 4
+#define MFRC522_CMD_AMOUNT 5
 #define MFRC522_MAX_INPUT_LEN 255
 #define MFRC522_MAX_PARAMETER_AMOUNT 2
 
@@ -33,6 +33,9 @@ static const struct driver_command commands[MFRC522_CMD_AMOUNT] = {
 	{ .input = "version",
 	  .parameter_amount = 0,
 	  .cmd = MFRC522_CMD_GET_VERSION },
+	{ .input = "self_test",
+	  .parameter_amount = 0,
+	  .cmd = MFRC522_CMD_SELF_TEST },
 };
 
 /**
