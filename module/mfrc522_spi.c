@@ -39,9 +39,26 @@ void mfrc522_fifo_flush(void)
 
 void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command)
 {
+    int cmd;
 	u8 command_byte = rcv_off << 5 | power_down << 4 | command;
 
 	mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG, command_byte);
+    cmd = mfrc522_read_command();
+
+    pr_info("PROUT: 0x%x\n", cmd);
+    pr_info("RePROUT: 0x%x\n", command);
+}
+
+int mfrc522_read_command(void) {
+    u8 command_reg;
+    int ret;
+
+    ret = mfrc522_register_read(mfrc522_spi, MFRC522_COMMAND_REG, &command_reg, 1);
+
+    if (ret < 0)
+        return ret;
+
+    return command_reg & 0b00001111;
 }
 
 int mfrc522_fifo_read(u8 *buf)
@@ -63,6 +80,20 @@ int mfrc522_fifo_read(u8 *buf)
 	return fifo_level;
 }
 
+int mfrc522_fifo_write(u8 *buf, size_t len)
+{
+    size_t i;
+    int ret;
+
+    for (i = 0; i < len; i++) {
+        ret = mfrc522_register_write(mfrc522_spi, MFRC522_FIFO_DATA_REG, buf[i]);
+        if (ret < 0)
+            return ret;
+    }
+
+	return len;
+}
+
 int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff, u8 read_len)
 {
 	struct address_byte reg_read =
@@ -71,7 +102,7 @@ int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff, u8 r
 	return spi_write_then_read(client, &reg_read, 1, read_buff, read_len);
 }
 
-void mfrc522_register_write(struct spi_device *client, u8 reg, u8 value)
+int mfrc522_register_write(struct spi_device *client, u8 reg, u8 value)
 {
 	struct address_byte reg_write =
 		address_byte_build(MFRC522_SPI_WRITE, reg);
@@ -80,5 +111,5 @@ void mfrc522_register_write(struct spi_device *client, u8 reg, u8 value)
 	// We cannot directly put reg_write in data[0] at init time
 	memcpy(&data[0], &reg_write, sizeof(u8));
 
-	spi_write(client, &data, 2);
+	return spi_write(client, &data, 2);
 }

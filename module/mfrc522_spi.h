@@ -73,6 +73,13 @@ void mfrc522_fifo_flush(void);
 void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command);
 
 /**
+ * Read the CommandReg register and return the MFRC522's current command
+ *
+ * @return The current command on success, a negative number on error
+ */
+int mfrc522_read_command(void);
+
+/**
  * Read FIFO content into a provided buffer
  *
  * @param buf Buffer to write the FIFO content to. It must be at least MFRC522_MAX_FIFO_SIZE wide
@@ -80,6 +87,7 @@ void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command);
  * @return A negative number on error, number of byte read otherwise
  */
 int mfrc522_fifo_read(u8 *buf);
+int mfrc522_fifo_write(u8 *buf, size_t len);
 
 /**
  * Reads a mfrc522 register
@@ -89,7 +97,7 @@ int mfrc522_fifo_read(u8 *buf);
  * @param read_buff Buffer to write the read content to. It must be at least read_len wide
  * @param read_len Number of bytes to read
  *
- * @return A negative number on error, 0 otherwise
+ * @return A negative number on error, 0 on success
  */
 int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff, u8 read_len);
 
@@ -99,8 +107,10 @@ int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff, u8 r
  * @param client SPI client to talk to
  * @param reg Register to write to
  * @param value Data to write in the register
+ *
+ * @return A negative number on error, 0 on success
  */
-void mfrc522_register_write(struct spi_device *client, u8 reg, u8 value);
+int mfrc522_register_write(struct spi_device *client, u8 reg, u8 value);
 
 #endif /* !MFRC522_SPI_H */
 
