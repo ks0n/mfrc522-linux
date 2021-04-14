@@ -58,6 +58,14 @@ struct address_byte address_byte_build(u8 mode, u8 addr);
 int mfrc522_get_version(void);
 
 /**
+ * Read the FIFO level of the MFRC522
+ *
+ * @return A positive number indicating the amount of bytes in the FIFO on success,
+ *         a negative number otherwise
+ */
+int mfrc522_fifo_level(void);
+
+/**
  * Flush the FIFO buffer of the MFRC522
  */
 void mfrc522_fifo_flush(void);

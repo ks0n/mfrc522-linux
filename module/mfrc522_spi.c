@@ -22,7 +22,8 @@ int mfrc522_get_version(void)
 	u8 version;
 	int ret;
 
-	ret = mfrc522_register_read(mfrc522_spi, MFRC522_VERSION_REG, &version, 1);
+	ret = mfrc522_register_read(mfrc522_spi, MFRC522_VERSION_REG, &version,
+				    1);
 
 	if (ret < 0)
 		return ret;
@@ -37,64 +38,93 @@ void mfrc522_fifo_flush(void)
 	mfrc522_register_write(mfrc522_spi, MFRC522_FIFO_LEVEL_REG, flush_byte);
 }
 
+static void wait_for_cmd(void)
+{
+	int cmd;
+
+	do {
+		cmd = mfrc522_read_command();
+		pr_info("[MFRC522] Current command is: 0x%x\n", cmd);
+	} while (cmd != MFRC522_COMMAND_IDLE);
+}
+
 void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command)
 {
-    int cmd;
 	u8 command_byte = rcv_off << 5 | power_down << 4 | command;
 
 	mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG, command_byte);
-    cmd = mfrc522_read_command();
 
-    pr_info("PROUT: 0x%x\n", cmd);
-    pr_info("RePROUT: 0x%x\n", command);
+	wait_for_cmd();
 }
 
-int mfrc522_read_command(void) {
-    u8 command_reg;
-    int ret;
+int mfrc522_read_command(void)
+{
+	u8 command_reg;
+	int ret;
 
-    ret = mfrc522_register_read(mfrc522_spi, MFRC522_COMMAND_REG, &command_reg, 1);
+	ret = mfrc522_register_read(mfrc522_spi, MFRC522_COMMAND_REG,
+				    &command_reg, 1);
 
-    if (ret < 0)
-        return ret;
+	if (ret < 0)
+		return ret;
 
-    return command_reg & 0b00001111;
+	return command_reg & 0b00001111;
 }
 
-int mfrc522_fifo_read(u8 *buf)
+int mfrc522_fifo_level(void)
 {
 	u8 fifo_level;
 	int ret;
 
-	ret = mfrc522_register_read(mfrc522_spi, MFRC522_FIFO_LEVEL_REG, &fifo_level, 1);
+	ret = mfrc522_register_read(mfrc522_spi, MFRC522_FIFO_LEVEL_REG,
+				    &fifo_level, 1);
 	if (ret < 0)
 		return ret;
 
 	// Mask the MSb to get the amount of bytes in the FIFO buffer
 	fifo_level &= 0x7F;
 
-	ret = mfrc522_register_read(mfrc522_spi, MFRC522_FIFO_DATA_REG, buf, fifo_level);
-	if (ret < 0)
-		return ret;
+	pr_info("[MFRC522] Fifo level: %d\n", fifo_level);
+
+	return fifo_level;
+}
+
+int mfrc522_fifo_read(u8 *buf)
+{
+	size_t i;
+	int ret;
+	int fifo_level = mfrc522_fifo_level();
+
+	if (fifo_level < 0)
+		return fifo_level;
+
+	for (i = 0; i < fifo_level; i++) {
+		ret = mfrc522_register_read(mfrc522_spi, MFRC522_FIFO_DATA_REG,
+					    buf + i, 1);
+		if (ret < 0)
+			return ret;
+	}
 
 	return fifo_level;
 }
 
 int mfrc522_fifo_write(u8 *buf, size_t len)
 {
-    size_t i;
-    int ret;
+	size_t i;
+	int ret;
 
-    for (i = 0; i < len; i++) {
-        ret = mfrc522_register_write(mfrc522_spi, MFRC522_FIFO_DATA_REG, buf[i]);
-        if (ret < 0)
-            return ret;
-    }
+	for (i = 0; i < len; i++) {
+		ret = mfrc522_register_write(mfrc522_spi, MFRC522_FIFO_DATA_REG,
+					     buf[i]);
+		if (ret < 0)
+			return ret;
+	}
 
 	return len;
 }
 
-int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff, u8 read_len)
+int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff,
+			  u8 read_len)
 {
 	struct address_byte reg_read =
 		address_byte_build(MFRC522_SPI_READ, reg);
