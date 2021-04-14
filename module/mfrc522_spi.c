@@ -135,7 +135,7 @@ int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff,
 			return ret;
 	}
 
-    return read_len;
+	return read_len;
 }
 
 int mfrc522_register_write(struct spi_device *client, u8 reg, u8 value)

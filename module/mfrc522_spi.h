@@ -111,7 +111,8 @@ int mfrc522_fifo_write(u8 *buf, size_t len);
  *
  * @return A negative number on error, 0 on success
  */
-int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff, u8 read_len);
+int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff,
+			  u8 read_len);
 
 /**
  * Write a value to a mfrc522 register
@@ -125,4 +126,3 @@ int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff, u8 r
 int mfrc522_register_write(struct spi_device *client, u8 reg, u8 value);
 
 #endif /* !MFRC522_SPI_H */
-
