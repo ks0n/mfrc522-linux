@@ -35,15 +35,6 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
 	return mfrc522_command_init(cmd, cmd_byte, NULL, 0);
 }
 
-static void wait_for_cmd(void) {
-    int cmd;
-
-    do {
-        cmd = mfrc522_read_command();
-        pr_info("[MFRC522] Current command is: 0x%x\n", cmd);
-    } while (cmd != MFRC522_COMMAND_IDLE);
-}
-
 /**
  * Read the internal memory of the MFRC522
  *
@@ -51,19 +42,11 @@ static void wait_for_cmd(void) {
  */
 static int mem_read(char *answer)
 {
-	int byte_amount;
-
-    mfrc522_fifo_write("Hey", 3);
-    mfrc522_send_command(MFRC522_RCV_ON, MFRC522_POWER_DOWN_OFF,
-    		     MFRC522_COMMAND_MEM);
-
-    wait_for_cmd();
+	int byte_amount = 0;
 
 	mfrc522_fifo_flush();
 	mfrc522_send_command(MFRC522_RCV_ON, MFRC522_POWER_DOWN_OFF,
 			     MFRC522_COMMAND_MEM);
-
-    wait_for_cmd();
 
 	byte_amount = mfrc522_fifo_read(answer);
 	if (byte_amount < 0) {
