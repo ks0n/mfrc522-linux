@@ -95,6 +95,10 @@ int mfrc522_read_command(void);
  * @return A negative number on error, number of byte read otherwise
  */
 int mfrc522_fifo_read(u8 *buf);
+
+/**
+ * FIXME: Add doc
+ */
 int mfrc522_fifo_write(u8 *buf, size_t len);
 
 /**

@@ -91,19 +91,16 @@ int mfrc522_fifo_level(void)
 
 int mfrc522_fifo_read(u8 *buf)
 {
-	size_t i;
 	int ret;
 	int fifo_level = mfrc522_fifo_level();
 
 	if (fifo_level < 0)
 		return fifo_level;
 
-	for (i = 0; i < fifo_level; i++) {
-		ret = mfrc522_register_read(mfrc522_spi, MFRC522_FIFO_DATA_REG,
-					    buf + i, 1);
-		if (ret < 0)
-			return ret;
-	}
+	ret = mfrc522_register_read(mfrc522_spi, MFRC522_FIFO_DATA_REG, buf,
+				    fifo_level);
+	if (ret < 0)
+		return ret;
 
 	return fifo_level;
 }
@@ -120,16 +117,25 @@ int mfrc522_fifo_write(u8 *buf, size_t len)
 			return ret;
 	}
 
-	return len;
+	return 0;
 }
 
 int mfrc522_register_read(struct spi_device *client, u8 reg, u8 *read_buff,
 			  u8 read_len)
 {
+	size_t i;
+	int ret;
 	struct address_byte reg_read =
 		address_byte_build(MFRC522_SPI_READ, reg);
 
-	return spi_write_then_read(client, &reg_read, 1, read_buff, read_len);
+	for (i = 0; i < read_len; i++) {
+		ret = spi_write_then_read(client, &reg_read, 1, read_buff + i,
+					  1);
+		if (ret < 0)
+			return ret;
+	}
+
+    return read_len;
 }
 
 int mfrc522_register_write(struct spi_device *client, u8 reg, u8 value)
