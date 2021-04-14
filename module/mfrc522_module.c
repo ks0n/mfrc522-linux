@@ -48,7 +48,7 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 
 	answer_size = mfrc522_execute(answer, &command);
 
-	pr_info("[MFRC522] Answer: %*.s\n", answer_size, answer);
+	pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, answer);
 
 	return len;
 }
