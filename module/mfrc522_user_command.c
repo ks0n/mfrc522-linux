@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 
-#include "mfrc522_command.h"
+#include "mfrc522_user_command.h"
 #include "linux/kernel.h"
 #include "linux/slab.h"
 #include "linux/string.h"
@@ -35,16 +35,49 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
 	return mfrc522_command_init(cmd, cmd_byte, NULL, 0);
 }
 
+/**
+ * Read the internal memory of the MFRC522
+ *
+ * @param answer Buffer in which to store the memory's content
+ *
+ * @return The size of the read on success, -1 on error
+ */
+static int mem_read(char *answer)
+{
+	int byte_amount = 0;
+
+	mfrc522_fifo_flush();
+	if (mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+				 MFRC522_COMMAND_REG_POWER_DOWN_OFF,
+				 MFRC522_COMMAND_MEM) < 0)
+		return -1;
+
+	byte_amount = mfrc522_fifo_read(answer);
+	if (byte_amount < 0) {
+		pr_err("[MFRC522] An error happened when reading MFRC522's internal memory\n");
+		return -1;
+	}
+
+	pr_info("[MFRC522] Read %d bytes from memory\n", byte_amount);
+
+	return byte_amount;
+}
+
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 {
+	int ret = -1;
+
 	switch (cmd->cmd) {
 	case MFRC522_CMD_GET_VERSION:
-		sprintf(answer, "%d", mfrc522_get_version());
+		ret = sprintf(answer, "%d", mfrc522_get_version());
+		break;
+	case MFRC522_CMD_MEM_READ:
+		ret = mem_read(answer);
 		break;
 	default:
-		strcpy(answer, "none");
+		ret = sprintf(answer, "%s", "Command unimplemented");
 	}
 
 	// FIXME: Add logic
-	return 0;
+	return ret;
 }

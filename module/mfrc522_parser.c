@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
 #include "linux/kernel.h"
-#include "mfrc522_command.h"
+#include "mfrc522_user_command.h"
 
 #include <linux/string.h>
 #include <linux/slab.h>
@@ -79,19 +79,19 @@ static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
 
 	if (ret == -EINVAL) {
 		pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
-				token);
+		       token);
 		return ret;
 	}
 
 	if (ret == -ERANGE) {
 		pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n",
-				token);
+		       token);
 		return ret;
 	}
 
 	if (extra_data_len > MFRC522_MAX_DATA_LEN) {
 		pr_err("[MFRC522] Invalid parameter for Data length: Length %d is too important (max length: 25)\n",
-				extra_data_len);
+		       extra_data_len);
 		return -1;
 	}
 
@@ -100,12 +100,12 @@ static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
 	// of parameters
 	if (!extra_data) {
 		pr_err("[MFRC522] Invalid command: %s: Expected %d arguments but got 1\n",
-				ref_cmd->input, ref_cmd->parameter_amount);
+		       ref_cmd->input, ref_cmd->parameter_amount);
 		return -1;
 	}
 
 	return mfrc522_command_init(cmd, ref_cmd->cmd, extra_data,
-			extra_data_len);
+				    extra_data_len);
 }
 
 int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
