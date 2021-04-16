@@ -33,7 +33,7 @@ int mfrc522_get_version(void)
 
 void mfrc522_fifo_flush(void)
 {
-	u8 flush_byte = 1 << 7;
+	u8 flush_byte = 1 << MFRC522_FIFO_LEVEL_REG_FLUSH_BIT;
 
 	mfrc522_register_write(mfrc522_spi, MFRC522_FIFO_LEVEL_REG, flush_byte);
 }
@@ -50,7 +50,9 @@ static void wait_for_cmd(void)
 
 void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command)
 {
-	u8 command_byte = rcv_off << 5 | power_down << 4 | command;
+	u8 command_byte = rcv_off << MFRC522_COMMAND_REG_RCV_OFF_BIT |
+			  power_down << MFRC522_COMMAND_REG_POWER_DOWN_BIT |
+			  command;
 
 	mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG, command_byte);
 
@@ -68,7 +70,7 @@ int mfrc522_read_command(void)
 	if (ret < 0)
 		return ret;
 
-	return command_reg & 0b00001111;
+	return command_reg & MFRC522_COMMAND_REG_COMMAND_MASK;
 }
 
 int mfrc522_fifo_level(void)
@@ -82,7 +84,7 @@ int mfrc522_fifo_level(void)
 		return ret;
 
 	// Mask the MSb to get the amount of bytes in the FIFO buffer
-	fifo_level &= 0x7F;
+	fifo_level &= MFRC522_FIFO_LEVEL_REG_LEVEL_MASK;
 
 	pr_info("[MFRC522] Fifo level: %d\n", fifo_level);
 
