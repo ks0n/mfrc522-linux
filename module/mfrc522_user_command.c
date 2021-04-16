@@ -45,9 +45,10 @@ static int mem_read(char *answer)
 	int byte_amount = 0;
 
 	mfrc522_fifo_flush();
-	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+	if (mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
 			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
-			     MFRC522_COMMAND_MEM);
+			     MFRC522_COMMAND_MEM) < 0)
+        return -1;
 
 	byte_amount = mfrc522_fifo_read(answer);
 	if (byte_amount < 0) {

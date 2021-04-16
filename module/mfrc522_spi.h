@@ -77,8 +77,10 @@ void mfrc522_fifo_flush(void);
  * @param rcv_off If 1, turn off analog part of the receiver
  * @param power_down If 1, enter soft power down mode
  * @param command MFRC522 commands as described 10.3
+ *
+ * @return 0 on success, -1 on error
  */
-void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command);
+int mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command);
 
 /**
  * Read the CommandReg register and return the MFRC522's current command

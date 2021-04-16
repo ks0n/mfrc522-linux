@@ -55,15 +55,18 @@ static void wait_for_cmd(void)
 	} while (cmd != MFRC522_COMMAND_IDLE);
 }
 
-void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command)
+int mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command)
 {
 	u8 command_byte = rcv_off << MFRC522_COMMAND_REG_RCV_OFF_SHIFT |
 			  power_down << MFRC522_COMMAND_REG_POWER_DOWN_SHIFT |
 			  command;
 
-	mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG, command_byte);
+	if (mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG, command_byte) < 0)
+        return -1;
 
 	wait_for_cmd();
+
+    return 0;
 }
 
 int mfrc522_read_command(void)
