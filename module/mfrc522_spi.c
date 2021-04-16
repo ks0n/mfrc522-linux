@@ -5,6 +5,13 @@
 
 #include "mfrc522_spi.h"
 
+#define MFRC522_FIFO_LEVEL_REG_FLUSH_SHIFT 7
+#define MFRC522_FIFO_LEVEL_REG_LEVEL_MASK 0x7F
+
+#define MFRC522_COMMAND_REG_RCV_OFF_SHIFT 5
+#define MFRC522_COMMAND_REG_POWER_DOWN_SHIFT 4
+#define MFRC522_COMMAND_REG_COMMAND_MASK 0xF
+
 struct spi_device *mfrc522_spi;
 
 struct address_byte address_byte_build(u8 mode, u8 addr)
@@ -33,7 +40,7 @@ int mfrc522_get_version(void)
 
 void mfrc522_fifo_flush(void)
 {
-	u8 flush_byte = 1 << MFRC522_FIFO_LEVEL_REG_FLUSH_BIT;
+	u8 flush_byte = 1 << MFRC522_FIFO_LEVEL_REG_FLUSH_SHIFT;
 
 	mfrc522_register_write(mfrc522_spi, MFRC522_FIFO_LEVEL_REG, flush_byte);
 }
@@ -50,8 +57,8 @@ static void wait_for_cmd(void)
 
 void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command)
 {
-	u8 command_byte = rcv_off << MFRC522_COMMAND_REG_RCV_OFF_BIT |
-			  power_down << MFRC522_COMMAND_REG_POWER_DOWN_BIT |
+	u8 command_byte = rcv_off << MFRC522_COMMAND_REG_RCV_OFF_SHIFT |
+			  power_down << MFRC522_COMMAND_REG_POWER_DOWN_SHIFT |
 			  command;
 
 	mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG, command_byte);
