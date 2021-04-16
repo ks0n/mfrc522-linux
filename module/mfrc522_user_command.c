@@ -38,6 +38,8 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
 /**
  * Read the internal memory of the MFRC522
  *
+ * @param answer Buffer in which to store the memory's content
+ *
  * @return The size of the read on success, -1 on error
  */
 static int mem_read(char *answer)
