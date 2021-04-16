@@ -99,7 +99,14 @@ int mfrc522_read_command(void);
 int mfrc522_fifo_read(u8 *buf);
 
 /**
- * FIXME: Add doc
+ * Write content to the MFRC522's FIFO
+ *
+ * @warn The FIFO's max size is 64 bytes
+ *
+ * @param buf Buffer from which to write into the FIFO
+ * @param len Amount of bytes to write to the FIFO
+ *
+ * @return 0 on success, -1 on error
  */
 int mfrc522_fifo_write(u8 *buf, size_t len);
 
