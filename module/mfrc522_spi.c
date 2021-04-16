@@ -61,12 +61,13 @@ int mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command)
 			  power_down << MFRC522_COMMAND_REG_POWER_DOWN_SHIFT |
 			  command;
 
-	if (mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG, command_byte) < 0)
-        return -1;
+	if (mfrc522_register_write(mfrc522_spi, MFRC522_COMMAND_REG,
+				   command_byte) < 0)
+		return -1;
 
 	wait_for_cmd();
 
-    return 0;
+	return 0;
 }
 
 int mfrc522_read_command(void)

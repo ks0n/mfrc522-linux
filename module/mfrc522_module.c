@@ -48,13 +48,13 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 
 	answer_size = mfrc522_execute(answer, &command);
 
-    // Error
-    if (answer_size < 0)
-        pr_err("[MFRC522] Error when executing command\n");
+	// Error
+	if (answer_size < 0)
+		pr_err("[MFRC522] Error when executing command\n");
 
-    // Non-empty answer
-    if (answer_size > 0)
-        pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, answer);
+	// Non-empty answer
+	if (answer_size > 0)
+		pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, answer);
 
 	return len;
 }
