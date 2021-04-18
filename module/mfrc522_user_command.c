@@ -6,6 +6,8 @@
 #include "linux/string.h"
 #include "mfrc522_spi.h"
 
+u8 mfrc522_driver_memory[MFRC522_MAX_DATA_LEN] = { 0 };
+
 int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 			 u8 data_len)
 {
@@ -58,6 +60,9 @@ static int mem_read(char *answer)
 		return -1;
 	}
 
+	// Store the content of the internal memory in the driver's memory buffer
+	memcpy(mfrc522_driver_memory, answer, MFRC522_MAX_DATA_LEN);
+
 	pr_info("[MFRC522] Read %d bytes from memory\n", byte_amount);
 
 	return byte_amount;
@@ -86,7 +91,8 @@ static int mem_write(char *data, u8 data_len)
 	     remaining_bytes++)
 		mfrc522_fifo_write(&null_char, 1);
 
-	mfrc522_send_command(MFRC522_RCV_ON, MFRC522_POWER_DOWN_OFF,
+	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
 			     MFRC522_COMMAND_MEM);
 
 	pr_info("[MFRC522] Wrote %d bytes to memory\n", data_len);

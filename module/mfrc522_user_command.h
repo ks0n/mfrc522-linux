@@ -8,6 +8,9 @@
 #define MFRC522_MAX_DATA_LEN 25
 #define MFRC522_MAX_FIFO_LEN 64
 
+// Global record of the last memory read from the MFRC522's internal memory
+extern u8 mfrc522_driver_memory[MFRC522_MAX_DATA_LEN];
+
 enum mfrc522_commands {
 	MFRC522_CMD_MEM_WRITE = 0x00,
 	MFRC522_CMD_MEM_READ,

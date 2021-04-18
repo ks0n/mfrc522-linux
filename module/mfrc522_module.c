@@ -59,11 +59,23 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 	return len;
 }
 
-static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len,
+static ssize_t mfrc522_read(struct file *file, char __user *buffer, size_t len,
 			    loff_t *offset)
 {
 	pr_info("[MFRC522] Being read\n");
+	pr_info("[MFRC522] Buffer content: %.*s\n", MFRC522_MAX_DATA_LEN,
+		mfrc522_driver_memory);
 
+	if (*offset > MFRC522_MAX_DATA_LEN)
+		return 0;
+
+	if (len > MFRC522_MAX_DATA_LEN)
+		len = MFRC522_MAX_DATA_LEN - *offset;
+
+	if (copy_to_user(buffer, mfrc522_driver_memory + *offset, len))
+		return -EFAULT;
+
+	*offset += len;
 	return len;
 }
 
