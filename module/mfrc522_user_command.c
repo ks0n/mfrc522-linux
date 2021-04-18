@@ -82,7 +82,7 @@ static int mem_write(char *data, u8 data_len)
 	}
 
 	// Complete the remaining slot with NULL bytes
-	for (remaining_bytes = data_len; remaining_bytes < MFRC522_MAX_DATA_LEN;
+	for (remaining_bytes = data_len; remaining_bytes < MFRC522_MEM_SIZE;
 	     remaining_bytes++)
 		mfrc522_fifo_write(&null_char, 1);
 
