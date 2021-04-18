@@ -86,7 +86,8 @@ static int mem_write(char *data, u8 data_len)
 	     remaining_bytes++)
 		mfrc522_fifo_write(&null_char, 1);
 
-	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON, MFRC522_COMMAND_REG_POWER_DOWN_OFF,
+	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
 			     MFRC522_COMMAND_MEM);
 
 	pr_info("[MFRC522] Wrote %d bytes to memory\n", data_len);
@@ -103,24 +104,18 @@ static int mem_write(char *data, u8 data_len)
  */
 static int generate_random(char *answer)
 {
-	u8 i;
-	int byte_amount;
-	u8 tmp_rand_id[MFRC522_MAX_DATA_LEN] = { 0 };
+	u8 zero_buffer[MFRC522_MAX_DATA_LEN] = { 0 };
 
-    // Clear the internal buffer
-    mem_write(tmp_rand_id, MFRC522_MAX_DATA_LEN);
+	// Clear the internal buffer
+	if (mem_write(zero_buffer, MFRC522_MAX_DATA_LEN) < 0)
+		return -1;
 
-	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
-			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
-			     MFRC522_COMMAND_GENERATE_RANDOM_ID);
+	if (mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+				 MFRC522_COMMAND_REG_POWER_DOWN_OFF,
+				 MFRC522_COMMAND_GENERATE_RANDOM_ID) < 0)
+		return -1;
 
-	byte_amount = mem_read(tmp_rand_id);
-
-    // Convert every received character to its actual value
-	for (i = 0; i < byte_amount; i++)
-		sprintf(answer + i, "%d", tmp_rand_id[i]);
-
-	return byte_amount;
+	return 0;
 }
 
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
@@ -144,6 +139,5 @@ int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 		ret = sprintf(answer, "%s", "Command unimplemented");
 	}
 
-	// FIXME: Add logic
 	return ret;
 }
