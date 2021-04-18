@@ -95,7 +95,7 @@ int mfrc522_fifo_level(void)
 		return ret;
 
 	// Mask the MSb to get the amount of bytes in the FIFO buffer
-	fifo_level &= 0x7F;
+	fifo_level &= MFRC522_FIFO_LEVEL_REG_LEVEL_MASK;
 
 	pr_info("[MFRC522] Fifo level: %d\n", fifo_level);
 

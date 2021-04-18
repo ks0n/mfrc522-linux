@@ -31,12 +31,6 @@ struct address_byte {
 #define MFRC522_COMMAND_MF_AUTHENT 0b1110
 #define MFRC522_COMMAND_SOFT_RESET 0b1111
 
-// Values for CommandReg, see 9.3.1.2
-#define MFRC522_RCV_ON 0
-#define MFRC522_RCV_OFF 1
-#define MFRC522_POWER_DOWN_ON 1
-#define MFRC522_POWER_DOWN_OFF 0
-
 // MFRC522 registers, see 9.2
 #define MFRC522_COMMAND_REG 0x1
 #define MFRC522_FIFO_DATA_REG 0x9
