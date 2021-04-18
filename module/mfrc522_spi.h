@@ -43,6 +43,12 @@ struct address_byte {
 #define MFRC522_FIFO_LEVEL_REG 0xA
 #define MFRC522_VERSION_REG 0x37
 
+// Helpers for command register values
+#define MFRC522_COMMAND_REG_RCV_ON 0
+#define MFRC522_COMMAND_REG_RCV_OFF 1
+#define MFRC522_COMMAND_REG_POWER_DOWN_ON 1
+#define MFRC522_COMMAND_REG_POWER_DOWN_OFF 0
+
 extern struct spi_device *mfrc522_spi;
 
 /**
@@ -77,8 +83,10 @@ void mfrc522_fifo_flush(void);
  * @param rcv_off If 1, turn off analog part of the receiver
  * @param power_down If 1, enter soft power down mode
  * @param command MFRC522 commands as described 10.3
+ *
+ * @return 0 on success, -1 on error
  */
-void mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command);
+int mfrc522_send_command(u8 rcv_off, u8 power_down, u8 command);
 
 /**
  * Read the CommandReg register and return the MFRC522's current command
@@ -97,7 +105,14 @@ int mfrc522_read_command(void);
 int mfrc522_fifo_read(u8 *buf);
 
 /**
- * FIXME: Add doc
+ * Write content to the MFRC522's FIFO
+ *
+ * @warn The FIFO's max size is 64 bytes
+ *
+ * @param buf Buffer from which to write into the FIFO
+ * @param len Amount of bytes to write to the FIFO
+ *
+ * @return 0 on success, -1 on error
  */
 int mfrc522_fifo_write(u8 *buf, size_t len);
 

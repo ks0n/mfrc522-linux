@@ -38,7 +38,7 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
 /**
  * Read the internal memory of the MFRC522
  *
- * @param answer Buffer in which to store the internal readings
+ * @param answer Buffer in which to store the memory's content
  *
  * @return The size of the read on success, -1 on error
  */
@@ -47,8 +47,10 @@ static int mem_read(char *answer)
 	int byte_amount = 0;
 
 	mfrc522_fifo_flush();
-	mfrc522_send_command(MFRC522_RCV_ON, MFRC522_POWER_DOWN_OFF,
-			     MFRC522_COMMAND_MEM);
+	if (mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+				 MFRC522_COMMAND_REG_POWER_DOWN_OFF,
+				 MFRC522_COMMAND_MEM) < 0)
+		return -1;
 
 	byte_amount = mfrc522_fifo_read(answer);
 	if (byte_amount < 0) {
