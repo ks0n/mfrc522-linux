@@ -66,7 +66,7 @@ static int mem_read(char *answer)
 /**
  * Write data into the MFRC522's internal memory
  *
- * @param data Data to write
+ * @param data User input to write to the memory
  * @param data_len Length of the data to write
  *
  * @return 0 on success, -1 on error
