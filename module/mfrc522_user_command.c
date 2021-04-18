@@ -86,12 +86,41 @@ static int mem_write(char *data, u8 data_len)
 	     remaining_bytes++)
 		mfrc522_fifo_write(&null_char, 1);
 
-	mfrc522_send_command(MFRC522_RCV_ON, MFRC522_POWER_DOWN_OFF,
+	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON, MFRC522_COMMAND_REG_POWER_DOWN_OFF,
 			     MFRC522_COMMAND_MEM);
 
 	pr_info("[MFRC522] Wrote %d bytes to memory\n", data_len);
 
 	return 0;
+}
+
+/**
+ * Generate a 10-byte wide random ID
+ *
+ * @param answer Buffer in which to store the answer
+ *
+ * @return The amount of bytes received on success, -1 on error
+ */
+static int generate_random(char *answer)
+{
+	u8 i;
+	int byte_amount;
+	u8 tmp_rand_id[MFRC522_MAX_DATA_LEN] = { 0 };
+
+    // Clear the internal buffer
+    mem_write(tmp_rand_id, MFRC522_MAX_DATA_LEN);
+
+	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
+			     MFRC522_COMMAND_GENERATE_RANDOM_ID);
+
+	byte_amount = mem_read(tmp_rand_id);
+
+    // Convert every received character to its actual value
+	for (i = 0; i < byte_amount; i++)
+		sprintf(answer + i, "%d", tmp_rand_id[i]);
+
+	return byte_amount;
 }
 
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
@@ -107,6 +136,9 @@ int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 		break;
 	case MFRC522_CMD_MEM_WRITE:
 		ret = mem_write(cmd->data, cmd->data_len);
+		break;
+	case MFRC522_CMD_GEN_RANDOM:
+		ret = generate_random(answer);
 		break;
 	default:
 		ret = sprintf(answer, "%s", "Command unimplemented");
