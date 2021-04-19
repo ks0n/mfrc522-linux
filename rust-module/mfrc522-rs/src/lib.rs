@@ -1,3 +1,5 @@
+mod user_command;
+
 #[no_mangle]
 pub fn hello_rust() -> i32 {
     1
