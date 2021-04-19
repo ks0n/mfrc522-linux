@@ -66,30 +66,26 @@ static int mem_read(char *answer)
 }
 
 /**
- * Write data into the MFRC522's internal memory
+ * Write 25 bytes of data into the MFRC522's internal memory
  *
  * @param data User input to write to the memory
- * @param data_len Length of the data to write
  *
  * @return 0 on success, -1 on error
  */
-static int mem_write(char *data, u8 data_len)
+static int mem_write(char *data)
 {
-	static const char null_bytes[MFRC522_MEM_SIZE] = { 0 };
-
-	if (mfrc522_fifo_write(data, data_len) < 0) {
+    // We know that data is zero-filled since we initialized it using
+    // mfrc522_command_init()
+	if (mfrc522_fifo_write(data, MFRC522_MEM_SIZE) < 0) {
 		pr_err("[MFRC522] Couldn't write to FIFO\n");
 		return -1;
 	}
-
-	// Complete the remaining slot with NULL bytes
-	mfrc522_fifo_write(null_bytes, MFRC522_MEM_SIZE - data_len);
 
 	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
 			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
 			     MFRC522_COMMAND_MEM);
 
-	pr_info("[MFRC522] Wrote %d bytes to memory\n", data_len);
+	pr_info("[MFRC522] Wrote data to memory\n");
 
 	return 0;
 }
@@ -106,7 +102,7 @@ int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 		ret = mem_read(answer);
 		break;
 	case MFRC522_CMD_MEM_WRITE:
-		ret = mem_write(cmd->data, cmd->data_len);
+		ret = mem_write(cmd->data);
 		break;
 	default:
 		ret = sprintf(answer, "%s", "Command unimplemented");
