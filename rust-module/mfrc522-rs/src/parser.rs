@@ -1,5 +1,7 @@
 use super::command::{Cmd, Command};
 
+const SEPARATOR: char = ':';
+
 /// Possible errors when parsing user input
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
@@ -18,13 +20,23 @@ pub struct Parser;
 pub type ParseResult = Result<Command, ParseError>;
 
 impl Parser {
-    fn parse_simple(cmd: &str) -> ParseResult {
+    fn parse_simple(input: &str) -> ParseResult {
+        match Cmd::from_str(input) {
+            None => Err(ParseError::UnknownCommand),
+            Some(cmd) => Ok(Command::new_simple(cmd)),
+        }
+    }
+
+    fn parse_complex(input: &str, idx: usize) -> ParseResult {
         todo!()
     }
 
     /// Parse an MFRC522 command from the user's input
     pub fn parse(input: &str) -> ParseResult {
-        todo!()
+        match input.find(SEPARATOR) {
+            None => Parser::parse_simple(input),
+            Some(first_sep_idx) => Parser::parse_complex(input, first_sep_idx),
+        }
     }
 }
 

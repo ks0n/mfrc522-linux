@@ -31,6 +31,19 @@ pub enum Cmd {
     GenRand,
 }
 
+impl Cmd {
+    /// Get the corresponding Cmd from a text command, None if invalid
+    pub fn from_str(cmd: &str) -> Option<Cmd> {
+        match cmd {
+            "mem_read" => Some(Cmd::MemRead),
+            "mem_write" => Some(Cmd::MemWrite),
+            "get_version" => Some(Cmd::GetVersion),
+            "gen_rand_id" => Some(Cmd::GenRand),
+            _ => None,
+        }
+    }
+}
+
 /// Argument of a command, if present
 #[derive(Debug, PartialEq)]
 struct CommandArg {
