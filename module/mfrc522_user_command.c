@@ -6,10 +6,12 @@
 #include "linux/string.h"
 #include "mfrc522_spi.h"
 
+#define MFRC522_MEM_SIZE 25
+
 int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 			 u8 data_len)
 {
-	if (data_len > MFRC522_MAX_DATA_LEN) {
+	if (data_len > MFRC522_MEM_SIZE) {
 		pr_err("[MFRC522] Invalid length for command: Got %d, expected length inferior to 25\n",
 		       data_len);
 		return -1;
@@ -25,7 +27,7 @@ int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 
 	// Copy the user's extra data into the command, and zero out the remaining bytes
 	strncpy(cmd->data, data, data_len);
-	memset(cmd->data + data_len, '\0', MFRC522_MAX_DATA_LEN - data_len);
+	memset(cmd->data + data_len, '\0', MFRC522_MEM_SIZE - data_len);
 
 	return 0;
 }
@@ -73,8 +75,7 @@ static int mem_read(char *answer)
  */
 static int mem_write(char *data, u8 data_len)
 {
-	u8 remaining_bytes;
-	u8 null_char = '\0';
+    static const char null_bytes[MFRC522_MEM_SIZE] = { 0 };
 
 	if (mfrc522_fifo_write(data, data_len) < 0) {
 		pr_err("[MFRC522] Couldn't write to FIFO\n");
@@ -82,9 +83,7 @@ static int mem_write(char *data, u8 data_len)
 	}
 
 	// Complete the remaining slot with NULL bytes
-	for (remaining_bytes = data_len; remaining_bytes < MFRC522_MEM_SIZE;
-	     remaining_bytes++)
-		mfrc522_fifo_write(&null_char, 1);
+    mfrc522_fifo_write(null_bytes, MFRC522_MEM_SIZE - data_len);
 
 	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
 			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
