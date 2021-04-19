@@ -17,7 +17,6 @@ enum mfrc522_commands {
 
 struct mfrc522_command {
 	u8 cmd;
-	u8 data_len;
 	char data[MFRC522_MAX_DATA_LEN];
 };
 

@@ -23,7 +23,6 @@ int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 	}
 
 	cmd->cmd = cmd_byte;
-	cmd->data_len = data_len;
 
 	// Copy the user's extra data into the command, and zero out the remaining bytes
 	strncpy(cmd->data, data, data_len);
@@ -74,8 +73,8 @@ static int mem_read(char *answer)
  */
 static int mem_write(char *data)
 {
-    // We know that data is zero-filled since we initialized it using
-    // mfrc522_command_init()
+	// We know that data is zero-filled since we initialized it using
+	// mfrc522_command_init()
 	if (mfrc522_fifo_write(data, MFRC522_MEM_SIZE) < 0) {
 		pr_err("[MFRC522] Couldn't write to FIFO\n");
 		return -1;
