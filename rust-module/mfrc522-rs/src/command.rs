@@ -19,7 +19,6 @@ pub enum CommandExecutionError {
 pub type CommandResult = Result<CommandSuccess, CommandExecutionError>;
 
 /// Possible commands accepted by the MFRC522
-#[repr(u8)]
 #[derive(Debug, PartialEq)]
 pub enum Cmd {
     /// Write data to the MFRC522's internal buffer
