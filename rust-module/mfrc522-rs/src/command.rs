@@ -1,6 +1,23 @@
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
 
+/// Result of a successful command execution
+pub enum CommandSuccess {
+    /// Amount of bytes written if any
+    BytesWritten(usize),
+    /// Amount of bytes read if any
+    BytesRead(usize),
+    /// The command returned successfully without an answer
+    NoAnswer,
+}
+
+/// Possible causes of an error during command execution
+pub enum CommandExecutionError {
+}
+
+/// Return type of command execution functions
+pub type CommandResult = Result<CommandSuccess, CommandExecutionError>;
+
 /// Possible commands accepted by the MFRC522
 #[repr(u8)]
 #[derive(Debug, PartialEq)]
@@ -60,24 +77,24 @@ impl Command {
         }
     }
 
-    fn mem_write(&self) -> Option<&str> {
+    fn mem_write(&self) -> CommandResult {
         todo!()
     }
 
-    fn mem_read(&self) -> Option<&str> {
+    fn mem_read(&self) -> CommandResult {
         todo!()
     }
 
-    fn get_version(&self) -> Option<&str> {
+    fn get_version(&self) -> CommandResult {
         todo!()
     }
 
-    fn generate_random_id(&self) -> Option<&str> {
+    fn generate_random_id(&self) -> CommandResult {
         todo!()
     }
 
-    /// Execute the required command, sending and receiving information to the MFRC522
-    pub fn execute(&self) -> Option<&str> {
+    /// Execute the required command, sending and receiving information to the MFRC522.
+    pub fn execute(&self) -> CommandResult {
         match &self.cmd {
             Cmd::MemWrite => self.mem_write(),
             Cmd::MemRead => self.mem_read(),
