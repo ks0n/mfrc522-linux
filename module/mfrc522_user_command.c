@@ -75,7 +75,7 @@ static int mem_read(char *answer)
  */
 static int mem_write(char *data, u8 data_len)
 {
-    static const char null_bytes[MFRC522_MEM_SIZE] = { 0 };
+	static const char null_bytes[MFRC522_MEM_SIZE] = { 0 };
 
 	if (mfrc522_fifo_write(data, data_len) < 0) {
 		pr_err("[MFRC522] Couldn't write to FIFO\n");
@@ -83,7 +83,7 @@ static int mem_write(char *data, u8 data_len)
 	}
 
 	// Complete the remaining slot with NULL bytes
-    mfrc522_fifo_write(null_bytes, MFRC522_MEM_SIZE - data_len);
+	mfrc522_fifo_write(null_bytes, MFRC522_MEM_SIZE - data_len);
 
 	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
 			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
