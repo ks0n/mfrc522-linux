@@ -1,4 +1,5 @@
-mod user_command;
+pub mod parser;
+pub mod command;
 
 #[no_mangle]
 pub fn hello_rust() -> i32 {

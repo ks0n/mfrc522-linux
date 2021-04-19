@@ -1,14 +1,19 @@
 use super::command::{Cmd, Command};
 
+/// Possible errors when parsing user input
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
+    /// The command required does not exist
     UnknownCommand,
+    /// The command expected a different amount of arguments
     InvalidArgNumber,
 }
 
+/// Empty parser struct for static methods
 pub struct Parser;
 
 impl Parser {
+    /// Parse an MFRC522 command from the user's input
     pub fn parse(_input: &str) -> Result<Command, ParseError> {
         Ok(Command::new_simple(Cmd::MemRead))
     }
