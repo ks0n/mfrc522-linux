@@ -2,6 +2,7 @@ use super::command::{Cmd, Command};
 use core::str::FromStr;
 
 const SEPARATOR: char = ':';
+const INPUT_SIZE: usize = 25;
 
 /// Possible errors when parsing user input
 #[derive(Debug, PartialEq)]
@@ -25,7 +26,7 @@ pub struct Parser;
 pub type ParseResult = Result<Command, ParseError>;
 
 impl Parser {
-    fn parse_simple(input: &str) -> ParseResult {
+    fn get_cmd(input: &str) -> Result<Cmd, ParseError> {
         match Cmd::from_str(input) {
             None => {
                 if input.is_empty() {
@@ -34,51 +35,64 @@ impl Parser {
                     Err(ParseError::UnknownCommand)
                 }
             }
-            Some(cmd) => match cmd.has_args() {
-                false => Ok(Command::new_simple(cmd)),
-                true => Err(ParseError::InvalidArgNumber),
-            },
+            Some(cmd) => Ok(cmd),
         }
     }
 
-    // fn get_cmd(input: &str) -> Result<&str, ParseError> {
-    // }
+    fn parse_simple(input: &str) -> ParseResult {
+        let cmd = Parser::get_cmd(input)?;
 
-    fn parse_complex(input: &str) -> ParseResult {
-        let mut split = input.split(SEPARATOR);
-
-        let cmd = match split.next() {
-            Some(input) => input,
-            None => return Err(ParseError::EmptyInput),
-        };
-
-        // FIXME: No unwrap
-        let data_len = match u8::from_str(split.next().unwrap()) {
-            Ok(value) => value,
-            Err(_) => return Err(ParseError::InvalidDataLen),
-        };
-
-        if data_len > 25 {
-            return Err(ParseError::DataLenTooBig);
+        match cmd.has_args() {
+            false => Ok(Command::new_simple(cmd)),
+            true => Err(ParseError::InvalidArgNumber),
         }
+    }
 
-        let mut data: [u8; 25] = [0; 25];
+    fn get_data_len(input: &str) -> Result<u8, ParseError> {
+        match u8::from_str(input) {
+            Ok(value) => {
+                if value > INPUT_SIZE as u8 {
+                    Err(ParseError::DataLenTooBig)
+                } else {
+                    Ok(value)
+                }
+            }
+            Err(_) => {
+                if input.is_empty() {
+                    Err(ParseError::InvalidArgNumber)
+                } else {
+                    Err(ParseError::InvalidDataLen)
+                }
+            }
+        }
+    }
 
-        let tmp_data = match split.next() {
-            Some(input) => &input.as_bytes()[0..core::cmp::min(25, input.len())],
-            None => return Err(ParseError::InvalidArgNumber),
-        };
+    fn get_data(input: &str) -> Result<[u8; INPUT_SIZE], ParseError> {
+        use core::cmp::min;
 
-        for idx in 0..core::cmp::min(tmp_data.len(), 25) {
+        let mut data: [u8; INPUT_SIZE] = [0; INPUT_SIZE];
+        let len = min(input.len(), INPUT_SIZE);
+        let tmp_data = &input.as_bytes()[0..len];
+
+        for idx in 0..len {
             data[idx] = tmp_data[idx];
         }
 
-        match Cmd::from_str(cmd) {
-            None => Err(ParseError::UnknownCommand),
-            Some(cmd) => match cmd.has_args() {
-                true => Ok(Command::new(cmd, data_len, data)),
-                false => Err(ParseError::InvalidArgNumber),
-            },
+        match len {
+            0 => Err(ParseError::InvalidArgNumber),
+            _ => Ok(data),
+        }
+    }
+
+    fn parse_complex(input: &str) -> ParseResult {
+        let mut split = input.split(SEPARATOR);
+        let cmd = Parser::get_cmd(split.next().unwrap_or(""))?;
+        let data_len = Parser::get_data_len(split.next().unwrap_or(""))?;
+        let data = Parser::get_data(split.next().unwrap_or(""))?;
+
+        match cmd.has_args() {
+            true => Ok(Command::new(cmd, data_len, data)),
+            false => Err(ParseError::InvalidArgNumber),
         }
     }
 
@@ -119,7 +133,7 @@ mod tests {
     #[test]
     fn valid_mem_write() {
         let cmd = Parser::parse("mem_write:3:Hey");
-        let mut ref_data = [0u8; 25];
+        let mut ref_data = [0u8; INPUT_SIZE];
         ref_data[0] = 'H' as u8;
         ref_data[1] = 'e' as u8;
         ref_data[2] = 'y' as u8;
