@@ -14,6 +14,8 @@ pub enum ParseError {
     InvalidArgNumber,
     /// The extra data len argument was not a number
     InvalidDataLen,
+    /// The extra data len was a number, but was too important
+    DataLenTooBig,
 }
 
 /// Empty parser struct for static methods
@@ -46,6 +48,10 @@ impl Parser {
             Ok(value) => value,
             Err(_) => return Err(ParseError::InvalidDataLen),
         };
+
+        if data_len > 25 {
+            return Err(ParseError::DataLenTooBig);
+        }
 
         let mut data: [u8; 25] = [0; 25];
 
@@ -131,6 +137,13 @@ mod tests {
         let cmd = Parser::parse("mem_read:3:Hey");
 
         assert_eq!(cmd, Err(ParseError::InvalidArgNumber));
+    }
+
+    #[test]
+    fn data_len_over_25() {
+        let cmd = Parser::parse("mem_write:26:Hey");
+
+        assert_eq!(cmd, Err(ParseError::DataLenTooBig));
     }
 
     #[test]
