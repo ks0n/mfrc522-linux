@@ -27,7 +27,13 @@ pub type ParseResult = Result<Command, ParseError>;
 impl Parser {
     fn parse_simple(input: &str) -> ParseResult {
         match Cmd::from_str(input) {
-            None => Err(ParseError::UnknownCommand),
+            None => {
+                if input.is_empty() {
+                    Err(ParseError::EmptyInput)
+                } else {
+                    Err(ParseError::UnknownCommand)
+                }
+            }
             Some(cmd) => match cmd.has_args() {
                 false => Ok(Command::new_simple(cmd)),
                 true => Err(ParseError::InvalidArgNumber),
@@ -35,12 +41,15 @@ impl Parser {
         }
     }
 
+    // fn get_cmd(input: &str) -> Result<&str, ParseError> {
+    // }
+
     fn parse_complex(input: &str) -> ParseResult {
         let mut split = input.split(SEPARATOR);
 
         let cmd = match split.next() {
             Some(input) => input,
-            None => return Err(ParseError::InvalidArgNumber),
+            None => return Err(ParseError::EmptyInput),
         };
 
         // FIXME: No unwrap
@@ -115,14 +124,7 @@ mod tests {
         ref_data[1] = 'e' as u8;
         ref_data[2] = 'y' as u8;
 
-        assert_eq!(
-            cmd,
-            Ok(Command::new(
-                Cmd::MemWrite,
-                3,
-                ref_data
-            ))
-        );
+        assert_eq!(cmd, Ok(Command::new(Cmd::MemWrite, 3, ref_data)));
     }
 
     #[test]
@@ -179,5 +181,12 @@ mod tests {
         let cmd = Parser::parse("not_a_cmd");
 
         assert_eq!(cmd, Err(ParseError::UnknownCommand));
+    }
+
+    #[test]
+    fn empty_input() {
+        let cmd = Parser::parse("");
+
+        assert_eq!(cmd, Err(ParseError::EmptyInput));
     }
 }
