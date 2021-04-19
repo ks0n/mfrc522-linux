@@ -60,24 +60,24 @@ impl Command {
         }
     }
 
-    fn mem_write(&self) -> Option<String> {
+    fn mem_write(&self) -> Option<&str> {
         todo!()
     }
 
-    fn mem_read(&self) -> Option<String> {
+    fn mem_read(&self) -> Option<&str> {
         todo!()
     }
 
-    fn get_version(&self) -> Option<String> {
+    fn get_version(&self) -> Option<&str> {
         todo!()
     }
 
-    fn generate_random_id(&self) -> Option<String> {
+    fn generate_random_id(&self) -> Option<&str> {
         todo!()
     }
 
     /// Execute the required command, sending and receiving information to the MFRC522
-    pub fn execute(&self) -> Option<String> {
+    pub fn execute(&self) -> Option<&str> {
         match &self.cmd {
             Cmd::MemWrite => self.mem_write(),
             Cmd::MemRead => self.mem_read(),

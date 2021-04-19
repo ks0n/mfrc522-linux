@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0
 
 #include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/miscdevice.h>
-#include <linux/init.h>
-#include <linux/spi/spi.h>
-#include <linux/regmap.h>
 #include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/miscdevice.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/spi/spi.h>
 
 #include "mfrc522-rs/mfrc522.h"
 
