@@ -3,6 +3,8 @@ use super::command::{Cmd, Command};
 /// Possible errors when parsing user input
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
+    /// No input was provided to the parser
+    EmptyInput,
     /// The command required does not exist
     UnknownCommand,
     /// The command expected a different amount of arguments
@@ -12,10 +14,17 @@ pub enum ParseError {
 /// Empty parser struct for static methods
 pub struct Parser;
 
+/// Result type used by the parser, containing a Command or a ParseError
+pub type ParseResult = Result<Command, ParseError>;
+
 impl Parser {
+    fn parse_simple(cmd: &str) -> ParseResult {
+        todo!()
+    }
+
     /// Parse an MFRC522 command from the user's input
-    pub fn parse(_input: &str) -> Result<Command, ParseError> {
-        Ok(Command::new_simple(Cmd::MemRead))
+    pub fn parse(input: &str) -> ParseResult {
+        todo!()
     }
 }
 
