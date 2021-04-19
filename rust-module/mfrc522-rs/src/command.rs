@@ -12,8 +12,7 @@ pub enum CommandSuccess {
 }
 
 /// Possible causes of an error during command execution
-pub enum CommandExecutionError {
-}
+pub enum CommandExecutionError {}
 
 /// Return type of command execution functions
 pub type CommandResult = Result<CommandSuccess, CommandExecutionError>;
@@ -42,6 +41,14 @@ impl Cmd {
             _ => None,
         }
     }
+
+    /// Does the command need arguments or not
+    pub fn has_args(&self) -> bool {
+        match &self {
+            Cmd::MemRead | Cmd::GenRand | Cmd::GetVersion => false,
+            Cmd::MemWrite => true,
+        }
+    }
 }
 
 /// Argument of a command, if present
@@ -65,10 +72,7 @@ pub struct Command {
 impl CommandArg {
     /// Create a new command argument from data and its length
     fn new(data_len: u8, data: [u8; MAX_DATA_LEN]) -> CommandArg {
-        CommandArg {
-            data_len,
-            data
-        }
+        CommandArg { data_len, data }
     }
 }
 
@@ -83,10 +87,7 @@ impl Command {
 
     /// Create a simple command without an argument
     pub fn new_simple(cmd: Cmd) -> Command {
-        Command {
-            cmd,
-            arg: None,
-        }
+        Command { cmd, arg: None }
     }
 
     fn mem_write(&self) -> CommandResult {

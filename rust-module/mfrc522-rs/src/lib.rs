@@ -4,8 +4,8 @@
 // such as kalloc, strcpy, strncpy...
 #![no_std]
 
-pub mod parser;
 pub mod command;
+pub mod parser;
 
 #[cfg(target_arch = "arm")]
 use core::panic::PanicInfo;
