@@ -9,7 +9,7 @@
 int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 			 u8 data_len)
 {
-	if (data_len > MFRC522_MAX_DATA_LEN) {
+	if (data_len > MFRC522_MEM_SIZE) {
 		pr_err("[MFRC522] Invalid length for command: Got %d, expected length inferior to 25\n",
 		       data_len);
 		return -1;
@@ -21,11 +21,10 @@ int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 	}
 
 	cmd->cmd = cmd_byte;
-	cmd->data_len = data_len;
 
 	// Copy the user's extra data into the command, and zero out the remaining bytes
 	strncpy(cmd->data, data, data_len);
-	memset(cmd->data + data_len, '\0', MFRC522_MAX_DATA_LEN - data_len);
+	memset(cmd->data + data_len, '\0', MFRC522_MEM_SIZE - data_len);
 
 	return 0;
 }
@@ -63,6 +62,31 @@ static int mem_read(char *answer)
 	return byte_amount;
 }
 
+/**
+ * Write 25 bytes of data into the MFRC522's internal memory
+ *
+ * @param data User input to write to the memory
+ *
+ * @return 0 on success, -1 on error
+ */
+static int mem_write(char *data)
+{
+	// We know that data is zero-filled since we initialized it using
+	// mfrc522_command_init()
+	if (mfrc522_fifo_write(data, MFRC522_MEM_SIZE) < 0) {
+		pr_err("[MFRC522] Couldn't write to FIFO\n");
+		return -1;
+	}
+
+	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
+			     MFRC522_COMMAND_MEM);
+
+	pr_info("[MFRC522] Wrote data to memory\n");
+
+	return 0;
+}
+
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 {
 	int ret = -1;
@@ -73,6 +97,9 @@ int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 		break;
 	case MFRC522_CMD_MEM_READ:
 		ret = mem_read(answer);
+		break;
+	case MFRC522_CMD_MEM_WRITE:
+		ret = mem_write(cmd->data);
 		break;
 	default:
 		ret = sprintf(answer, "%s", "Command unimplemented");
