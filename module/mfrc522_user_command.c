@@ -11,7 +11,7 @@
 int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 			 u8 data_len)
 {
-	if (data_len > MFRC522_MAX_DATA_LEN) {
+	if (data_len > MFRC522_MEM_SIZE) {
 		pr_err("[MFRC522] Invalid length for command: Got %d, expected length inferior to 25\n",
 		       data_len);
 		return -1;
@@ -23,11 +23,10 @@ int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 	}
 
 	cmd->cmd = cmd_byte;
-	cmd->data_len = data_len;
 
 	// Copy the user's extra data into the command, and zero out the remaining bytes
 	strncpy(cmd->data, data, data_len);
-	memset(cmd->data + data_len, '\0', MFRC522_MAX_DATA_LEN - data_len);
+	memset(cmd->data + data_len, '\0', MFRC522_MEM_SIZE - data_len);
 
 	return 0;
 }
@@ -66,33 +65,26 @@ static int mem_read(char *answer)
 }
 
 /**
- * Write data into the MFRC522's internal memory
+ * Write 25 bytes of data into the MFRC522's internal memory
  *
  * @param data User input to write to the memory
- * @param data_len Length of the data to write
  *
  * @return 0 on success, -1 on error
  */
-static int mem_write(char *data, u8 data_len)
+static int mem_write(char *data)
 {
-	u8 remaining_bytes;
-	u8 null_char = '\0';
-
-	if (mfrc522_fifo_write(data, data_len) < 0) {
+	// We know that data is zero-filled since we initialized it using
+	// mfrc522_command_init()
+	if (mfrc522_fifo_write(data, MFRC522_MEM_SIZE) < 0) {
 		pr_err("[MFRC522] Couldn't write to FIFO\n");
 		return -1;
 	}
-
-	// Complete the remaining slot with NULL bytes
-	for (remaining_bytes = data_len; remaining_bytes < MFRC522_MAX_DATA_LEN;
-	     remaining_bytes++)
-		mfrc522_fifo_write(&null_char, 1);
 
 	mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
 			     MFRC522_COMMAND_REG_POWER_DOWN_OFF,
 			     MFRC522_COMMAND_MEM);
 
-	pr_info("[MFRC522] Wrote %d bytes to memory\n", data_len);
+	pr_info("[MFRC522] Wrote data to memory\n");
 
 	return 0;
 }
@@ -106,11 +98,12 @@ static int mem_write(char *data, u8 data_len)
  */
 static int generate_random(char *answer)
 {
-	u8 buffer[MFRC522_MAX_DATA_LEN + 1] = { 0 };
+	u8 buffer[MFRC522_MEM_SIZE] = { 0 };
+	char char_buffer[MFRC522_ID_SIZE * 2 + 1] = { 0 };
 	int i = 0;
 
 	// Clear the internal buffer
-	if (mem_write(buffer, MFRC522_MAX_DATA_LEN) < 0)
+	if (mem_write(buffer) < 0)
 		return -1;
 
 	if (mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
@@ -120,15 +113,16 @@ static int generate_random(char *answer)
 
 	/* We are reading for debug print, we don't need to report an error now
 	 * but at the next mem_read command. So we don't check mem_read return
-	 * value */
+	 * value
+	 */
 	mem_read(buffer);
 
 	for (i = 0; i < MFRC522_ID_SIZE; i++) {
 		// Each byte is 2 char wide in hexa so i*2
-		sprintf(answer + i * 2, "%02X", buffer[i]);
+		sprintf(char_buffer + i * 2, "%02X", buffer[i]);
 	}
 
-	pr_info("[MFRC522] Generated random ID: %s\n", answer);
+	pr_info("[MFRC522] Generated random ID: %s\n", char_buffer);
 
 	return 0;
 }
@@ -145,7 +139,7 @@ int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 		ret = mem_read(answer);
 		break;
 	case MFRC522_CMD_MEM_WRITE:
-		ret = mem_write(cmd->data, cmd->data_len);
+		ret = mem_write(cmd->data);
 		break;
 	case MFRC522_CMD_GEN_RANDOM:
 		ret = generate_random(answer);

@@ -5,6 +5,7 @@
 
 #include <linux/types.h>
 
+#define MFRC522_MEM_SIZE 25
 #define MFRC522_MAX_DATA_LEN 25
 #define MFRC522_MAX_FIFO_LEN 64
 
@@ -17,8 +18,7 @@ enum mfrc522_commands {
 
 struct mfrc522_command {
 	u8 cmd;
-	u8 data_len;
-	char data[MFRC522_MAX_DATA_LEN];
+	char data[MFRC522_MEM_SIZE];
 };
 
 /**

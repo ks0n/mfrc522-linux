@@ -118,7 +118,7 @@ int mfrc522_fifo_read(u8 *buf)
 	return fifo_level;
 }
 
-int mfrc522_fifo_write(u8 *buf, size_t len)
+int mfrc522_fifo_write(const u8 *buf, size_t len)
 {
 	size_t i;
 	int ret;

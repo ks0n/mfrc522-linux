@@ -108,7 +108,7 @@ int mfrc522_fifo_read(u8 *buf);
  *
  * @return 0 on success, -1 on error
  */
-int mfrc522_fifo_write(u8 *buf, size_t len);
+int mfrc522_fifo_write(const u8 *buf, size_t len);
 
 /**
  * Reads a mfrc522 register

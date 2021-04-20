@@ -9,6 +9,7 @@ tags
 
 # Object files overall
 *.o
+*.o_shipped
 
 # Files regenerated when compiling modules
 *.ko
@@ -16,6 +17,9 @@ tags
 *.cmd
 Module.symvers
 modules.order
+
+# Rust generated files
+target
 
 # Misc
 *.lock
