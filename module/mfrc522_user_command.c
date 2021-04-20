@@ -6,8 +6,6 @@
 #include "linux/string.h"
 #include "mfrc522_spi.h"
 
-#define MFRC522_MEM_SIZE 25
-
 int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 			 u8 data_len)
 {
