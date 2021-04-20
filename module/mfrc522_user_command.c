@@ -6,6 +6,8 @@
 #include "linux/string.h"
 #include "mfrc522_spi.h"
 
+#define MFRC522_ID_SIZE 10
+
 int mfrc522_command_init(struct mfrc522_command *cmd, u8 cmd_byte, char *data,
 			 u8 data_len)
 {
@@ -87,6 +89,44 @@ static int mem_write(char *data)
 	return 0;
 }
 
+/**
+ * Generate a 10-byte wide random ID
+ *
+ * @param answer Buffer in which to store the answer
+ *
+ * @return The amount of bytes received on success, -1 on error
+ */
+static int generate_random(char *answer)
+{
+	u8 buffer[MFRC522_MEM_SIZE] = { 0 };
+	char char_buffer[MFRC522_ID_SIZE * 2 + 1] = { 0 };
+	int i = 0;
+
+	// Clear the internal buffer
+	if (mem_write(buffer) < 0)
+		return -1;
+
+	if (mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
+				 MFRC522_COMMAND_REG_POWER_DOWN_OFF,
+				 MFRC522_COMMAND_GENERATE_RANDOM_ID) < 0)
+		return -1;
+
+	/* We are reading for debug print, we don't need to report an error now
+	 * but at the next mem_read command. So we don't check mem_read return
+	 * value
+	 */
+	mem_read(buffer);
+
+	for (i = 0; i < MFRC522_ID_SIZE; i++) {
+		// Each byte is 2 char wide in hexa so i*2
+		sprintf(char_buffer + i * 2, "%02X", buffer[i]);
+	}
+
+	pr_info("[MFRC522] Generated random ID: %s\n", char_buffer);
+
+	return 0;
+}
+
 int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 {
 	int ret = -1;
@@ -101,10 +141,12 @@ int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 	case MFRC522_CMD_MEM_WRITE:
 		ret = mem_write(cmd->data);
 		break;
+	case MFRC522_CMD_GEN_RANDOM:
+		ret = generate_random(answer);
+		break;
 	default:
 		ret = sprintf(answer, "%s", "Command unimplemented");
 	}
 
-	// FIXME: Add logic
 	return ret;
 }
