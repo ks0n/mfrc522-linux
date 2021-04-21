@@ -3,7 +3,7 @@ RUST_LIB = libmfrc522
 TARGET = armv7-unknown-linux-musleabi
 
 obj-m += mfrc522.o
-mfrc522-objs += module.o $(RUST_LIB).o
+mfrc522-objs += module.o glue.o $(RUST_LIB).o
 
 MAKE = make -C ../linux M=$(PWD)
 
@@ -17,6 +17,9 @@ modules:
 
 test:
 	cd $(RUST_DIR)/ && cargo test
+
+check:
+	cd $(RUST_DIR)/ && cargo check --target $(TARGET)
 
 clean:
 	cd $(RUST_DIR)/ && cargo clean
