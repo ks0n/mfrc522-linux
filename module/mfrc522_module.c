@@ -19,6 +19,11 @@
 
 #define MFRC522_MAX_ANSWER_SIZE 256 // FIXME
 
+static struct mfrc522_private_data {
+	bool buffer_full;
+	char answer[MFRC522_MAX_ANSWER_SIZE];
+} mfrc522_struct;
+
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
@@ -27,9 +32,15 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 			     loff_t *offset)
 {
 	int ret;
-	char answer[MFRC522_MAX_ANSWER_SIZE] = { 0 };
 	int answer_size;
+	char *answer;
 	struct mfrc522_command command = { 0 };
+	struct mfrc522_private_data *mfrc522_data;
+
+	file->private_data = &mfrc522_struct;
+
+	mfrc522_data = file->private_data;
+	answer = mfrc522_data->answer;
 
 	pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
 
@@ -48,13 +59,14 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 
 	answer_size = mfrc522_execute(answer, &command);
 
-	// Error
-	if (answer_size < 0)
+	if (answer_size < 0) {
+		// Error
 		pr_err("[MFRC522] Error when executing command\n");
-
-	// Non-empty answer
-	if (answer_size > 0)
+	} else {
+		// Non-empty answer
 		pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, answer);
+		mfrc522_data->buffer_full = true;
+	}
 
 	return len;
 }
@@ -62,7 +74,25 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len,
 			    loff_t *offset)
 {
-	pr_info("[MFRC522] Being read\n");
+	size_t i;
+	char *answer;
+	struct mfrc522_private_data *mfrc522_data;
+
+	pr_info("[MFRC522] Being read from\n");
+
+	file->private_data = &mfrc522_struct;
+
+	mfrc522_data = file->private_data;
+	answer = mfrc522_data->answer;
+
+	if (!mfrc522_data->buffer_full)
+		return 0;
+
+	len = (len > MFRC522_MEM_SIZE) ? MFRC522_MEM_SIZE : len;
+	for (i = 0; i < len; i++)
+		buffer[i] = answer[i];
+
+	mfrc522_data->buffer_full = false;
 
 	return len;
 }
