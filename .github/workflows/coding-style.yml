@@ -19,4 +19,4 @@ jobs:
         chmod +x checkpatch.pl
 
     - name: Check the coding style
-      run: ./checkpatch.pl --no-tree -f module/*.[ch]
+      run: ./checkpatch.pl --no-tree -f --ignore UNDOCUMENTED_DT_STRING module/*.[ch]
