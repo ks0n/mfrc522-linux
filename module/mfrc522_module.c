@@ -149,7 +149,7 @@ static int mfrc522_spi_probe(struct spi_device *client)
 	pr_info("[MFRC522] SPI Probed\n");
 
 	if (client->max_speed_hz > MFRC522_SPI_MAX_CLOCK_SPEED) {
-		pr_info("[MFRC522] Current speed is to high %u. Setting speed to %u\n",
+		pr_info("[MFRC522] Current speed (%u)Hz is too high. Setting speed to %uHz\n",
 			client->max_speed_hz, MFRC522_SPI_MAX_CLOCK_SPEED);
 		client->max_speed_hz = MFRC522_SPI_MAX_CLOCK_SPEED;
 	}
