@@ -120,7 +120,7 @@ static struct spi_driver mfrc522_spi_driver = {
 	.driver = {
 		.name = "mfrc522",
 		.owner = THIS_MODULE,
-        .of_match_table = mfrc522_match_table,
+		.of_match_table = mfrc522_match_table,
 	},
 	.probe = mfrc522_spi_probe,
 };
