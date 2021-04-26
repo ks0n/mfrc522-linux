@@ -6,6 +6,7 @@
 
 pub mod command;
 pub mod parser;
+mod spi;
 
 #[cfg(target_arch = "arm")]
 use core::panic::PanicInfo;

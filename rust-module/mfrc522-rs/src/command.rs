@@ -1,3 +1,5 @@
+use crate::spi::Spi;
+
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
 
