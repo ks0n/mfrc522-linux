@@ -11,7 +11,6 @@
 
 #define MFRC522_SEPARATOR ":"
 #define MFRC522_CMD_AMOUNT 4
-#define MFRC522_MAX_INPUT_LEN 255
 #define MFRC522_MAX_PARAMETER_AMOUNT 2
 
 struct driver_command {
@@ -126,12 +125,6 @@ int mfrc522_parse(struct mfrc522_command *cmd, const char *input, size_t len)
 	char *input_mut = input_cpy;
 	char *cmd_name;
 	const struct driver_command *command;
-
-	if (len > MFRC522_MAX_INPUT_LEN) {
-		pr_err("[MFRC522] Invalid input length: Max is %d, got %d\n",
-		       MFRC522_MAX_INPUT_LEN, len);
-		return -1;
-	}
 
 	// `strlcpy`, while being the safer version, expects a NULL-terminated string as source.
 	// However, the kernel does not NULL-terminate the user's input

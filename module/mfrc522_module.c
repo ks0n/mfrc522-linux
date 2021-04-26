@@ -28,27 +28,15 @@ MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 
-static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
-			     loff_t *offset)
+static ssize_t __mfrc522_write(struct mfrc522_private_data *mfrc522_data,
+			       const char *buffer, size_t len)
 {
-	int ret;
 	int answer_size;
-	char *answer;
 	struct mfrc522_command command = { 0 };
-	struct mfrc522_private_data *mfrc522_data;
 
-	file->private_data = &mfrc522_struct;
-
-	mfrc522_data = file->private_data;
-	answer = mfrc522_data->answer;
-
-	pr_info("[MFRC522] Being written to: %.*s\n", len, buffer);
-
-	ret = mfrc522_parse(&command, buffer, len);
-
-	if (ret) {
+	if (mfrc522_parse(&command, buffer, len) < 0) {
 		pr_err("[MFRC522] Got invalid command\n");
-		return -EBADMSG;
+		return -EINVAL;
 	}
 
 	pr_info("[MFRC522] Got following command: %d\n", command.cmd);
@@ -57,24 +45,53 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 	if (command.data[0])
 		pr_info("[MFRC522] With extra data: `%s`\n", command.data);
 
-	answer_size = mfrc522_execute(answer, &command);
+	answer_size = mfrc522_execute(mfrc522_data->answer, &command);
 
 	if (answer_size < 0) {
 		// Error
 		pr_err("[MFRC522] Error when executing command\n");
-	} else {
-		// Non-empty answer
-		pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, answer);
-		mfrc522_data->buffer_full = true;
+		return -EBADE;
 	}
 
+	// Non-empty answer
+	pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size,
+		mfrc522_data->answer);
+	mfrc522_data->buffer_full = true;
+
 	return len;
+}
+
+static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
+			     loff_t *offset)
+{
+	ssize_t ret;
+	char *answer;
+	struct mfrc522_private_data *mfrc522_data;
+	char kernel_buffer[MFRC522_MAX_INPUT_LEN] = { 0 };
+
+	if (len > MFRC522_MAX_INPUT_LEN)
+		return -EINVAL;
+
+	if (copy_from_user(kernel_buffer, buffer, len) != 0) {
+		pr_err("[MFRC522] Fail to copy from user\n");
+		return -EINVAL;
+	}
+
+	file->private_data = &mfrc522_struct;
+
+	mfrc522_data = file->private_data;
+	answer = mfrc522_data->answer;
+
+	pr_info("[MFRC522] Being written to: %.*s\n", len, kernel_buffer);
+
+	ret = __mfrc522_write(mfrc522_data, kernel_buffer, len);
+
+	return ret;
 }
 
 static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len,
 			    loff_t *offset)
 {
-	size_t i;
 	char *answer;
 	struct mfrc522_private_data *mfrc522_data;
 
@@ -88,9 +105,13 @@ static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len,
 	if (!mfrc522_data->buffer_full)
 		return 0;
 
-	len = (len > MFRC522_MEM_SIZE) ? MFRC522_MEM_SIZE : len;
-	for (i = 0; i < len; i++)
-		buffer[i] = answer[i];
+	if (len > MFRC522_MEM_SIZE)
+		len = MFRC522_MEM_SIZE;
+
+	if (copy_to_user(buffer, answer, len) != 0) {
+		pr_err("[MFRC522] Fail to copy to user\n");
+		return -EINVAL;
+	}
 
 	mfrc522_data->buffer_full = false;
 

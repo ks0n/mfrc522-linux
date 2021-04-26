@@ -7,6 +7,8 @@
 
 #include "mfrc522_user_command.h"
 
+#define MFRC522_MAX_INPUT_LEN 255
+
 /**
  * Parse and check input sent to the MFRC522. Return the command asked by the user
  *
