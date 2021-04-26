@@ -109,12 +109,18 @@ static struct miscdevice mfrc522_misc = {
 	.fops = &mfrc522_fops,
 };
 
+static const struct of_device_id mfrc522_match_table[] = {
+	{ .compatible = "mfrc522" },
+	{} // NULL entry
+};
+
 static int mfrc522_spi_probe(struct spi_device *spi);
 
 static struct spi_driver mfrc522_spi_driver = {
 	.driver = {
 		.name = "mfrc522",
 		.owner = THIS_MODULE,
+		.of_match_table = mfrc522_match_table,
 	},
 	.probe = mfrc522_spi_probe,
 };
