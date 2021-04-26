@@ -19,17 +19,20 @@
 
 #define MFRC522_MAX_ANSWER_SIZE 256 // FIXME
 
-static struct mfrc522_private_data {
+struct mfrc522_state {
+	struct miscdevice misc;
 	bool buffer_full;
 	char answer[MFRC522_MAX_ANSWER_SIZE];
-} mfrc522_struct;
+};
+
+static struct mfrc522_state *g_state;
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 
-static ssize_t __mfrc522_write(struct mfrc522_private_data *mfrc522_data,
-			       const char *buffer, size_t len)
+static ssize_t __mfrc522_write(struct mfrc522_state *state, const char *buffer,
+			       size_t len)
 {
 	int answer_size;
 	struct mfrc522_command command = { 0 };
@@ -45,7 +48,7 @@ static ssize_t __mfrc522_write(struct mfrc522_private_data *mfrc522_data,
 	if (command.data[0])
 		pr_info("[MFRC522] With extra data: `%s`\n", command.data);
 
-	answer_size = mfrc522_execute(mfrc522_data->answer, &command);
+	answer_size = mfrc522_execute(state->answer, &command);
 
 	if (answer_size < 0) {
 		// Error
@@ -54,9 +57,8 @@ static ssize_t __mfrc522_write(struct mfrc522_private_data *mfrc522_data,
 	}
 
 	// Non-empty answer
-	pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size,
-		mfrc522_data->answer);
-	mfrc522_data->buffer_full = true;
+	pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, state->answer);
+	state->buffer_full = true;
 
 	return len;
 }
@@ -66,7 +68,7 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 {
 	ssize_t ret;
 	char *answer;
-	struct mfrc522_private_data *mfrc522_data;
+	struct mfrc522_state *state;
 	char kernel_buffer[MFRC522_MAX_INPUT_LEN] = { 0 };
 
 	if (len > MFRC522_MAX_INPUT_LEN)
@@ -77,14 +79,12 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 		return -EINVAL;
 	}
 
-	file->private_data = &mfrc522_struct;
-
-	mfrc522_data = file->private_data;
-	answer = mfrc522_data->answer;
+	state = container_of(file->private_data, struct mfrc522_state, misc);
+	answer = state->answer;
 
 	pr_info("[MFRC522] Being written to: %.*s\n", len, kernel_buffer);
 
-	ret = __mfrc522_write(mfrc522_data, kernel_buffer, len);
+	ret = __mfrc522_write(state, kernel_buffer, len);
 
 	return ret;
 }
@@ -92,17 +92,16 @@ static ssize_t mfrc522_write(struct file *file, const char *buffer, size_t len,
 static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len,
 			    loff_t *offset)
 {
+	struct mfrc522_state *state;
 	char *answer;
-	struct mfrc522_private_data *mfrc522_data;
 
 	pr_info("[MFRC522] Being read from\n");
 
-	file->private_data = &mfrc522_struct;
+	state = container_of(file->private_data, struct mfrc522_state, misc);
 
-	mfrc522_data = file->private_data;
-	answer = mfrc522_data->answer;
+	answer = state->answer;
 
-	if (!mfrc522_data->buffer_full)
+	if (!state->buffer_full)
 		return 0;
 
 	if (len > MFRC522_MEM_SIZE)
@@ -113,7 +112,7 @@ static ssize_t mfrc522_read(struct file *file, char *buffer, size_t len,
 		return -EINVAL;
 	}
 
-	mfrc522_data->buffer_full = false;
+	state->buffer_full = false;
 
 	return len;
 }
@@ -122,12 +121,6 @@ static const struct file_operations mfrc522_fops = {
 	.owner = THIS_MODULE,
 	.write = mfrc522_write,
 	.read = mfrc522_read,
-};
-
-static struct miscdevice mfrc522_misc = {
-	.minor = MISC_DYNAMIC_MINOR,
-	.name = "mfrc522_misc",
-	.fops = &mfrc522_fops,
 };
 
 static const struct of_device_id mfrc522_match_table[] = {
@@ -190,10 +183,22 @@ static int mfrc522_spi_probe(struct spi_device *client)
 static int __init mfrc522_init(void)
 {
 	int ret;
+	struct mfrc522_state *state;
 
 	pr_info("MFRC522 init\n");
 
-	ret = misc_register(&mfrc522_misc);
+	state = kcalloc(1, sizeof(*state), GFP_KERNEL);
+
+	if (!state)
+		return -ENOMEM;
+
+	state->misc = (struct miscdevice){
+		.minor = MISC_DYNAMIC_MINOR,
+		.name = "mfrc522_misc",
+		.fops = &mfrc522_fops,
+	};
+
+	ret = misc_register(&state->misc);
 	if (ret) {
 		pr_err("[MFRC522] Misc device initialization failed\n");
 		return ret;
@@ -205,13 +210,17 @@ static int __init mfrc522_init(void)
 		return ret;
 	}
 
+	g_state = state;
+
 	return 0;
 }
 
 static void __exit mfrc522_exit(void)
 {
-	misc_deregister(&mfrc522_misc);
+	misc_deregister(&g_state->misc);
 	spi_unregister_driver(&mfrc522_spi_driver);
+
+	kfree(g_state);
 
 	pr_info("MFRC522 exit\n");
 }
