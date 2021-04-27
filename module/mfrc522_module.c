@@ -30,14 +30,13 @@ static void do_debug_read(const char *answer, int answer_size)
 
 	pr_info("RD\n");
 
-	for (i = 1; i < answer_size + 1; i++)  {
+	for (i = 1; i < answer_size + 1; i++) {
 		pr_cont("%02x", answer[i - 1]);
 
 		if (i % 5 == 0)
 			pr_cont("\n");
 		else
 			pr_cont(" ");
-
 	}
 
 	if (i % 5 != 0)
@@ -57,7 +56,6 @@ static void do_debug_write(const char *cmd)
 			pr_cont("\n");
 		else
 			pr_cont(" ");
-
 	}
 
 	if (i % 5 != 0)
@@ -67,16 +65,16 @@ static void do_debug_write(const char *cmd)
 static void do_debug(const struct mfrc522_command *cmd, const char *answer,
 		     int answer_size)
 {
-	switch(cmd->cmd) {
-		case MFRC522_CMD_MEM_READ:
-			do_debug_read(answer, answer_size);
-			break;
-		case MFRC522_CMD_MEM_WRITE:
-			do_debug_write(cmd->data);
-			break;
-		default:
-			/* Do nothing */
-			break;
+	switch (cmd->cmd) {
+	case MFRC522_CMD_MEM_READ:
+		do_debug_read(answer, answer_size);
+		break;
+	case MFRC522_CMD_MEM_WRITE:
+		do_debug_write(cmd->data);
+		break;
+	default:
+		/* Do nothing */
+		break;
 	}
 }
 

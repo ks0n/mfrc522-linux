@@ -127,7 +127,9 @@ static int generate_random(char *answer)
 	return 0;
 }
 
-static int set_debug(struct mfrc522_state *state, const struct mfrc522_command *cmd) {
+static int set_debug(struct mfrc522_state *state,
+		     const struct mfrc522_command *cmd)
+{
 	if (!strncmp(cmd->data, "on", 3))
 		state->debug_on = true;
 	else if (!strncmp(cmd->data, "off", 4))
@@ -138,7 +140,8 @@ static int set_debug(struct mfrc522_state *state, const struct mfrc522_command *
 	return 0;
 }
 
-int mfrc522_execute(struct mfrc522_state *state, char *answer, struct mfrc522_command *cmd)
+int mfrc522_execute(struct mfrc522_state *state, char *answer,
+		    struct mfrc522_command *cmd)
 {
 	int ret = -1;
 
