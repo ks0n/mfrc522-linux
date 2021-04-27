@@ -18,8 +18,6 @@
 #define MFRC522_VERSION_2 0x92
 #define MFRC522_VERSION_NUM(ver) ((ver)-MFRC522_VERSION_BASE)
 
-#define MFRC522_MAX_ANSWER_SIZE 256 // FIXME
-
 static struct mfrc522_state *g_state;
 
 MODULE_LICENSE("GPL v2");
@@ -28,39 +26,42 @@ MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 
 static void do_debug_read(const char *answer, int answer_size)
 {
+	int i;
 
 	pr_info("RD\n");
 
-	for (int i = 0; i < answer_size; i++)  {
-		pr_info("%02x", answer[i]);
+	for (i = 1; i < answer_size + 1; i++)  {
+		pr_cont("%02x", answer[i - 1]);
 
 		if (i % 5 == 0)
-			pr_info("\n");
+			pr_cont("\n");
 		else
-			pr_info(" ");
+			pr_cont(" ");
 
 	}
 
-	if (answer_size % 5 != 0)
-		pr_info("\n");
+	if (i % 5 != 0)
+		pr_cont("\n");
 }
 
 static void do_debug_write(const char *cmd)
 {
 	int i;
 
-	for (i = 0; cmd[i]; i++) {
-		pr_info("%02x", answer[i]);
+	pr_info("WR\n");
+
+	for (i = 1; cmd[i - 1]; i++) {
+		pr_cont("%02x", cmd[i - 1]);
 
 		if (i % 5 == 0)
-			pr_info("\n");
+			pr_cont("\n");
 		else
-			pr_info(" ");
+			pr_cont(" ");
 
 	}
 
 	if (i % 5 != 0)
-		pr_info("\n");
+		pr_cont("\n");
 }
 
 static void do_debug(const struct mfrc522_command *cmd, const char *answer,
@@ -69,11 +70,14 @@ static void do_debug(const struct mfrc522_command *cmd, const char *answer,
 	switch(cmd->cmd) {
 		case MFRC522_CMD_MEM_READ:
 			do_debug_read(answer, answer_size);
+			break;
 		case MFRC522_CMD_MEM_WRITE:
 			do_debug_write(cmd->data);
+			break;
 		default:
+			/* Do nothing */
+			break;
 	}
-
 }
 
 static ssize_t __mfrc522_write(struct mfrc522_state *state, const char *buffer,
@@ -102,7 +106,7 @@ static ssize_t __mfrc522_write(struct mfrc522_state *state, const char *buffer,
 	}
 
 	if (state->debug_on)
-		do_debug(&command, answer, answer_size);
+		do_debug(&command, state->answer, answer_size);
 
 	// Non-empty answer
 	pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, state->answer);
@@ -244,8 +248,9 @@ static int __init mfrc522_init(void)
 		.minor = MISC_DYNAMIC_MINOR,
 		.name = "mfrc522_misc",
 		.fops = &mfrc522_fops,
-		.debug_on = false,
 	};
+
+	state->debug_on = false,
 
 	ret = misc_register(&state->misc);
 	if (ret) {

@@ -5,6 +5,8 @@
 
 #include <linux/types.h>
 
+#include "mfrc522_module.h"
+
 #define MFRC522_MEM_SIZE 25
 #define MFRC522_MAX_DATA_LEN 25
 #define MFRC522_MAX_FIFO_LEN 64

@@ -156,7 +156,7 @@ int mfrc522_execute(struct mfrc522_state *state, char *answer, struct mfrc522_co
 		ret = generate_random(answer);
 		break;
 	case MFRC522_CMD_DEBUG:
-		ret = set_debug(state, cmd->data);
+		ret = set_debug(state, cmd);
 		break;
 	default:
 		ret = sprintf(answer, "%s", "Command unimplemented");
