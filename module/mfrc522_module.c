@@ -27,39 +27,49 @@ MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
 static void do_debug_read(const char *answer, int answer_size)
 {
 	int i;
+	char line[16];
+	int write_head = 0;
 
 	pr_info("RD\n");
 
 	for (i = 1; i < answer_size + 1; i++) {
-		pr_cont("%02x", answer[i - 1]);
+		write_head +=
+			snprintf(line + write_head, 16, "%02x", answer[i - 1]);
 
-		if (i % 5 == 0)
-			pr_cont("\n");
-		else
-			pr_cont(" ");
+		if (i % 5 == 0) {
+			pr_info("%s\n", line);
+			write_head = 0;
+		} else {
+			write_head += snprintf(line + write_head, 16, " ");
+		}
 	}
 
-	if (i % 5 != 0)
-		pr_cont("\n");
+	if (write_head > 0)
+		pr_info("%s\n", line);
 }
 
 static void do_debug_write(const char *cmd)
 {
 	int i;
+	char line[16];
+	int write_head = 0;
 
 	pr_info("WR\n");
 
 	for (i = 1; cmd[i - 1]; i++) {
-		pr_cont("%02x", cmd[i - 1]);
+		write_head +=
+			snprintf(line + write_head, 16, "%02x", cmd[i - 1]);
 
-		if (i % 5 == 0)
-			pr_cont("\n");
-		else
-			pr_cont(" ");
+		if (i % 5 == 0) {
+			pr_info("%s\n", line);
+			write_head = 0;
+		} else {
+			write_head += snprintf(line + write_head, 16, " ");
+		}
 	}
 
-	if (i % 5 != 0)
-		pr_cont("\n");
+	if (write_head > 0)
+		pr_info("%s\n", line);
 }
 
 static void do_debug(const struct mfrc522_command *cmd, const char *answer,
