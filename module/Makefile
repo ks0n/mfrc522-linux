@@ -10,7 +10,11 @@ endif
 obj-$(RELEASE) += mfrc522.o
 obj-$(TEST) += mfrc522_tests.o
 
-mfrc522-objs += mfrc522_module.o mfrc522_parser.o mfrc522_user_command.o mfrc522_spi.o
+mfrc522-objs += mfrc522_module.o \
+				mfrc522_parser.o \
+				mfrc522_user_command.o \
+				mfrc522_spi.o \
+				mfrc522_debug.o
 
 MAKE = make -C ../linux/ M=$(PWD)
 
