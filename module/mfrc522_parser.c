@@ -10,7 +10,7 @@
 #include "mfrc522_parser.h"
 
 #define MFRC522_SEPARATOR ":"
-#define MFRC522_CMD_AMOUNT 4
+#define MFRC522_CMD_AMOUNT 5
 #define MFRC522_MAX_PARAMETER_AMOUNT 2
 
 struct driver_command {
@@ -32,6 +32,7 @@ static const struct driver_command commands[MFRC522_CMD_AMOUNT] = {
 	{ .input = "version",
 	  .parameter_amount = 0,
 	  .cmd = MFRC522_CMD_GET_VERSION },
+	{ .input = "debug", .parameter_amount = 1, .cmd = MFRC522_CMD_DEBUG },
 };
 
 /**
@@ -73,17 +74,23 @@ static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
 	token = strsep(&input, MFRC522_SEPARATOR);
 	ret = kstrtou8(token, 10, &extra_data_len);
 
+	if (ref_cmd->parameter_amount == 1) {
+		extra_data = token;
+		extra_data_len = strnlen(extra_data, 4);
+		goto finish;
+	}
+
 	// The remaining user input is the extra data
 	extra_data = input;
 
 	if (ret == -EINVAL) {
-		pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got %s\n",
+		pr_err("[MFRC522] Invalid parameter for Data length: Expected number but got \"%s\"\n",
 		       token);
 		return ret;
 	}
 
 	if (ret == -ERANGE) {
-		pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got %s\n",
+		pr_err("[MFRC522] Invalid parameter for Data length: Expected Unsigned Byte (0 - 255) but got \"%s\"\n",
 		       token);
 		return ret;
 	}
@@ -103,6 +110,7 @@ static int parse_multi_arg(struct mfrc522_command *cmd, char *input,
 		return -1;
 	}
 
+finish:
 	return mfrc522_command_init(cmd, ref_cmd->cmd, extra_data,
 				    extra_data_len);
 }
