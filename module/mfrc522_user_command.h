@@ -16,7 +16,7 @@ enum mfrc522_commands {
 	MFRC522_CMD_MEM_READ,
 	MFRC522_CMD_GET_VERSION,
 	MFRC522_CMD_GEN_RANDOM,
-    MFRC522_CMD_DEBUG,
+	MFRC522_CMD_DEBUG,
 };
 
 struct mfrc522_command {

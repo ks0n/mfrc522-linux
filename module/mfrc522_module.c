@@ -248,7 +248,7 @@ static int __init mfrc522_init(void)
 		.fops = &mfrc522_fops,
 	};
 
-	state->debug_on = false,
+	state->debug_on = false;
 
 	ret = misc_register(&state->misc);
 	if (ret) {

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0 */
+
 #ifndef MFRC522_MODULE_H
 #define MFRC522_MODULE_H
 
