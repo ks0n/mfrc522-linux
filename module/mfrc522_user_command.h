@@ -14,6 +14,7 @@ enum mfrc522_commands {
 	MFRC522_CMD_MEM_READ,
 	MFRC522_CMD_GET_VERSION,
 	MFRC522_CMD_GEN_RANDOM,
+    MFRC522_CMD_DEBUG,
 };
 
 struct mfrc522_command {
@@ -52,6 +53,6 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte);
  *
  * @return The size of the answer on success, -1 on error
  */
-int mfrc522_execute(char *answer, struct mfrc522_command *cmd);
+int mfrc522_execute(struct mfrc522_state *state, char *answer, struct mfrc522_command *cmd);
 
 #endif /* ! MFRC522_COMMAND_H */

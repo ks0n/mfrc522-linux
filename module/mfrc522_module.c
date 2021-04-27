@@ -8,6 +8,7 @@
 #include <linux/regmap.h>
 #include <linux/fs.h>
 
+#include "mfrc522_module.h"
 #include "mfrc522_user_command.h"
 #include "mfrc522_parser.h"
 #include "mfrc522_spi.h"
@@ -19,17 +20,61 @@
 
 #define MFRC522_MAX_ANSWER_SIZE 256 // FIXME
 
-struct mfrc522_state {
-	struct miscdevice misc;
-	bool buffer_full;
-	char answer[MFRC522_MAX_ANSWER_SIZE];
-};
-
 static struct mfrc522_state *g_state;
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("ks0n");
 MODULE_DESCRIPTION("Driver for the MFRC522 RFID Chip");
+
+static void do_debug_read(const char *answer, int answer_size)
+{
+
+	pr_info("RD\n");
+
+	for (int i = 0; i < answer_size; i++)  {
+		pr_info("%02x", answer[i]);
+
+		if (i % 5 == 0)
+			pr_info("\n");
+		else
+			pr_info(" ");
+
+	}
+
+	if (answer_size % 5 != 0)
+		pr_info("\n");
+}
+
+static void do_debug_write(const char *cmd)
+{
+	int i;
+
+	for (i = 0; cmd[i]; i++) {
+		pr_info("%02x", answer[i]);
+
+		if (i % 5 == 0)
+			pr_info("\n");
+		else
+			pr_info(" ");
+
+	}
+
+	if (i % 5 != 0)
+		pr_info("\n");
+}
+
+static void do_debug(const struct mfrc522_command *cmd, const char *answer,
+		     int answer_size)
+{
+	switch(cmd->cmd) {
+		case MFRC522_CMD_MEM_READ:
+			do_debug_read(answer, answer_size);
+		case MFRC522_CMD_MEM_WRITE:
+			do_debug_write(cmd->data);
+		default:
+	}
+
+}
 
 static ssize_t __mfrc522_write(struct mfrc522_state *state, const char *buffer,
 			       size_t len)
@@ -48,13 +93,16 @@ static ssize_t __mfrc522_write(struct mfrc522_state *state, const char *buffer,
 	if (command.data[0])
 		pr_info("[MFRC522] With extra data: `%s`\n", command.data);
 
-	answer_size = mfrc522_execute(state->answer, &command);
+	answer_size = mfrc522_execute(state, state->answer, &command);
 
 	if (answer_size < 0) {
 		// Error
 		pr_err("[MFRC522] Error when executing command\n");
 		return -EBADE;
 	}
+
+	if (state->debug_on)
+		do_debug(&command, answer, answer_size);
 
 	// Non-empty answer
 	pr_info("[MFRC522] Answer: \"%.*s\"\n", answer_size, state->answer);
@@ -196,6 +244,7 @@ static int __init mfrc522_init(void)
 		.minor = MISC_DYNAMIC_MINOR,
 		.name = "mfrc522_misc",
 		.fops = &mfrc522_fops,
+		.debug_on = false,
 	};
 
 	ret = misc_register(&state->misc);

@@ -32,6 +32,9 @@ static const struct driver_command commands[MFRC522_CMD_AMOUNT] = {
 	{ .input = "version",
 	  .parameter_amount = 0,
 	  .cmd = MFRC522_CMD_GET_VERSION },
+	{ .input = "debug",
+	  .parameter_amount = 1,
+	  .cmd = MFRC522_CMD_DEBUG },
 };
 
 /**

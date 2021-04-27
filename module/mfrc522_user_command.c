@@ -127,7 +127,18 @@ static int generate_random(char *answer)
 	return 0;
 }
 
-int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
+static int set_debug(struct mfrc522_state *state, const struct mfrc522_command *cmd) {
+	if (!strncmp(cmd->data, "on", 3))
+		state->debug_on = true;
+	else if (!strncmp(cmd->data, "off", 4))
+		state->debug_on = false;
+	else
+		return -1;
+
+	return 0;
+}
+
+int mfrc522_execute(struct mfrc522_state *state, char *answer, struct mfrc522_command *cmd)
 {
 	int ret = -1;
 
@@ -143,6 +154,9 @@ int mfrc522_execute(char *answer, struct mfrc522_command *cmd)
 		break;
 	case MFRC522_CMD_GEN_RANDOM:
 		ret = generate_random(answer);
+		break;
+	case MFRC522_CMD_DEBUG:
+		ret = set_debug(state, cmd->data);
 		break;
 	default:
 		ret = sprintf(answer, "%s", "Command unimplemented");
