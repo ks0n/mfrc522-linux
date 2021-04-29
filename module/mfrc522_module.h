@@ -9,8 +9,8 @@
 #include <linux/miscdevice.h>
 
 struct mfrc522_stats {
-    unsigned bytes_read;
-    unsigned bytes_written;
+	unsigned int bytes_read;
+	unsigned int bytes_written;
 };
 
 struct mfrc522_state {
