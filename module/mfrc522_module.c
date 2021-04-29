@@ -126,7 +126,8 @@ static const struct of_device_id mfrc522_match_table[] = {
 };
 
 static ssize_t bits_read_show(struct device *dev, struct device_attribute *attr,
-		char *buf) {
+			      char *buf)
+{
 	struct mfrc522_state *state = dev_get_drvdata(dev);
 
 	return snprintf(buf, 8, "%u\n", state->stats.bytes_read * 8);
@@ -134,8 +135,9 @@ static ssize_t bits_read_show(struct device *dev, struct device_attribute *attr,
 
 DEVICE_ATTR_RO(bits_read);
 
-static ssize_t bits_written_show(struct device *dev, struct device_attribute *attr,
-		char *buf) {
+static ssize_t bits_written_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
 	struct mfrc522_state *state = dev_get_drvdata(dev);
 
 	return snprintf(buf, 8, "%u\n", state->stats.bytes_written * 8);
