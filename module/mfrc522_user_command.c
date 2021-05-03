@@ -43,7 +43,7 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
  *
  * @return The size of the read on success, -1 on error
  */
-static int mem_read(char *answer)
+static int mem_read(char *answer, struct mfrc522_statistics *stats)
 {
 	int byte_amount = 0;
 
@@ -61,6 +61,9 @@ static int mem_read(char *answer)
 
 	pr_info("[MFRC522] Read %d bytes from memory\n", byte_amount);
 
+	if (stats)
+		stats->bytes_read += byte_amount;
+
 	return byte_amount;
 }
 
@@ -71,7 +74,7 @@ static int mem_read(char *answer)
  *
  * @return 0 on success, -1 on error
  */
-static int mem_write(char *data)
+static int mem_write(char *data, struct mfrc522_statistics *stats)
 {
 	// We know that data is zero-filled since we initialized it using
 	// mfrc522_command_init()
@@ -86,6 +89,9 @@ static int mem_write(char *data)
 
 	pr_info("[MFRC522] Wrote data to memory\n");
 
+	if (stats)
+		stats->bytes_written += MFRC522_MEM_SIZE;
+
 	return 0;
 }
 
@@ -96,14 +102,14 @@ static int mem_write(char *data)
  *
  * @return The amount of bytes received on success, -1 on error
  */
-static int generate_random(char *answer)
+static int generate_random(char *answer, struct mfrc522_statistics *stats)
 {
 	u8 buffer[MFRC522_MEM_SIZE] = { 0 };
 	char char_buffer[MFRC522_ID_SIZE * 2 + 1] = { 0 };
 	int i = 0;
 
 	// Clear the internal buffer
-	if (mem_write(buffer) < 0)
+	if (mem_write(buffer, stats) < 0)
 		return -1;
 
 	if (mfrc522_send_command(MFRC522_COMMAND_REG_RCV_ON,
@@ -115,7 +121,7 @@ static int generate_random(char *answer)
 	 * but at the next mem_read command. So we don't check mem_read return
 	 * value
 	 */
-	mem_read(buffer);
+	mem_read(buffer, stats);
 
 	for (i = 0; i < MFRC522_ID_SIZE; i++) {
 		// Each byte is 2 char wide in hexa so i*2
@@ -150,13 +156,13 @@ int mfrc522_execute(struct mfrc522_state *state, char *answer,
 		ret = sprintf(answer, "%d", mfrc522_get_version());
 		break;
 	case MFRC522_CMD_MEM_READ:
-		ret = mem_read(answer);
+		ret = mem_read(answer, &state->stats);
 		break;
 	case MFRC522_CMD_MEM_WRITE:
-		ret = mem_write(cmd->data);
+		ret = mem_write(cmd->data, &state->stats);
 		break;
 	case MFRC522_CMD_GEN_RANDOM:
-		ret = generate_random(answer);
+		ret = generate_random(answer, &state->stats);
 		break;
 	case MFRC522_CMD_DEBUG:
 		ret = set_debug(state, cmd);

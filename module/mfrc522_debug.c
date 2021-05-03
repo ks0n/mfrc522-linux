@@ -38,7 +38,6 @@ static void do_debug_write(const char *cmd)
 	pr_info("WR\n");
 
 	__print_bytes(cmd, strlen(cmd));
-
 }
 
 void do_debug(const struct mfrc522_command *cmd, const char *answer,
@@ -56,4 +55,3 @@ void do_debug(const struct mfrc522_command *cmd, const char *answer,
 		break;
 	}
 }
-
