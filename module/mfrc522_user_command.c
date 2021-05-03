@@ -43,7 +43,7 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
  *
  * @return The size of the read on success, -1 on error
  */
-static int mem_read(char *answer, struct mfrc522_stats *stats)
+static int mem_read(char *answer, struct mfrc522_statistics *stats)
 {
 	int byte_amount = 0;
 
@@ -74,7 +74,7 @@ static int mem_read(char *answer, struct mfrc522_stats *stats)
  *
  * @return 0 on success, -1 on error
  */
-static int mem_write(char *data, struct mfrc522_stats *stats)
+static int mem_write(char *data, struct mfrc522_statistics *stats)
 {
 	// We know that data is zero-filled since we initialized it using
 	// mfrc522_command_init()
@@ -102,7 +102,7 @@ static int mem_write(char *data, struct mfrc522_stats *stats)
  *
  * @return The amount of bytes received on success, -1 on error
  */
-static int generate_random(char *answer, struct mfrc522_stats *stats)
+static int generate_random(char *answer, struct mfrc522_statistics *stats)
 {
 	u8 buffer[MFRC522_MEM_SIZE] = { 0 };
 	char char_buffer[MFRC522_ID_SIZE * 2 + 1] = { 0 };
