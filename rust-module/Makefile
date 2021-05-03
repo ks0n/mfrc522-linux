@@ -7,5 +7,8 @@ all: modules
 modules:
 	$(MAKE) modules
 
+fmt:
+	rustfmt *.rs
+
 clean:
 	$(MAKE) clean
