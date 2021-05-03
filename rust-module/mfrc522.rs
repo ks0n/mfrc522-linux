@@ -84,16 +84,15 @@ impl FileOperations for Mfrc522FileOps {
             Err(_) => Err(Error::EINVAL),
             // FIXME: Once the Command API is reworked, this will make more sense
             Ok(CommandSuccess::BytesWritten(amount)) => Ok(amount),
-            NoAnswer => Ok(0),
+            Ok(CommandSuccess::NoAnswer) => Ok(0),
             _ => Err(Error::EINVAL),
         }
     }
 }
 
 struct Mfrc522Driver {
-    misc: Pin<Box<miscdev::Registration>>,
-    // FIXME: We need to keep ownership of our SPI registration, or else it will get dropped
-    // when we'll return from the init() function
+    _spi: Pin<Box<spi::DriverRegistration>>,
+    _misc: Pin<Box<miscdev::Registration>>,
 }
 
 impl KernelModule for Mfrc522Driver {
@@ -104,10 +103,11 @@ impl KernelModule for Mfrc522Driver {
             miscdev::Registration::new_pinned::<Mfrc522FileOps>(cstr!("mfrc522_chrdev"), None, ())?;
 
         let mut spi =
-            spi::DriverRegistration::new(&THIS_MODULE, cstr!("mfrc522")).with_probe(mfrc522_probe);
-        spi.register()?;
+            spi::DriverRegistration::new_pinned(&THIS_MODULE, cstr!("mfrc522"))?
+            .with_probe(mfrc522_probe);
+        spi.as_mut().register()?; // FIXME: Not really pretty
 
-        Ok(Mfrc522Driver { misc })
+        Ok(Mfrc522Driver { _spi: spi, _misc: misc })
     }
 }
 
