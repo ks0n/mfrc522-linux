@@ -7,11 +7,12 @@ mod command;
 mod parser;
 
 use alloc::boxed::Box;
+use core::pin::Pin;
 use kernel::prelude::*;
 use kernel::{
-    chrdev, cstr,
+    cstr,
     file_operations::{FileOpener, FileOperations},
-    spi, spi_method,
+    miscdev, spi, spi_method,
 };
 
 module! {
@@ -47,21 +48,24 @@ impl FileOperations for Mfrc522FileOps {
     kernel::declare_file_operations!();
 }
 
-struct Mfrc522Driver;
+struct Mfrc522Driver {
+    misc: Pin<Box<miscdev::Registration>>,
+    // FIXME: We need to keep ownership of our SPI registration, or else it will get dropped
+    // when we'll return from the init() function
+}
 
 impl KernelModule for Mfrc522Driver {
     fn init() -> KernelResult<Self> {
         pr_info!("[MFRC522-RS] Init\n");
 
-        let mut chrdev_reg =
-            chrdev::Registration::<1>::new_pinned(cstr!("mfrc522_chrdev"), 0, &THIS_MODULE)?;
-        chrdev_reg.as_mut().register::<Mfrc522FileOps>()?;
+        let misc =
+            miscdev::Registration::new_pinned::<Mfrc522FileOps>(cstr!("mfrc522_chrdev"), None, ())?;
 
-        let mut spi_reg =
+        let mut spi =
             spi::DriverRegistration::new(&THIS_MODULE, cstr!("mfrc522")).with_probe(mfrc522_probe);
-        spi_reg.register()?;
+        spi.register()?;
 
-        Ok(Mfrc522Driver {})
+        Ok(Mfrc522Driver { misc })
     }
 }
 
