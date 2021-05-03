@@ -61,7 +61,8 @@ static int mem_read(char *answer, struct mfrc522_stats *stats)
 
 	pr_info("[MFRC522] Read %d bytes from memory\n", byte_amount);
 
-	stats->bytes_read += byte_amount;
+	if (stats)
+		stats->bytes_read += byte_amount;
 
 	return byte_amount;
 }
@@ -88,7 +89,8 @@ static int mem_write(char *data, struct mfrc522_stats *stats)
 
 	pr_info("[MFRC522] Wrote data to memory\n");
 
-	stats->bytes_written += MFRC522_MEM_SIZE;
+	if (stats)
+		stats->bytes_written += MFRC522_MEM_SIZE;
 
 	return 0;
 }
