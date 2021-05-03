@@ -3,3 +3,6 @@
     url = https://github.com/raspberrypi/linux
     branch = rpi-5.10.y
     shallow = true
+[submodule "linux-next"]
+	path = linux-next
+	url = https://github.com/ks0n/linux
