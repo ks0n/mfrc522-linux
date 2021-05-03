@@ -20,6 +20,7 @@ modules.order
 
 # Rust generated files
 target
+*.rmeta
 
 # Misc
 *.lock
