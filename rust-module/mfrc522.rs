@@ -6,13 +6,18 @@
 mod command;
 mod parser;
 
+use command::CommandSuccess;
+use parser::Parser;
+
 use alloc::boxed::Box;
 use core::pin::Pin;
 use kernel::prelude::*;
 use kernel::{
     cstr,
-    file_operations::{FileOpener, FileOperations},
+    file_operations::{File, FileOpener, FileOperations},
     miscdev, spi, spi_method,
+    user_ptr::{UserSlicePtrReader, UserSlicePtrWriter},
+    Error,
 };
 
 module! {
@@ -38,6 +43,7 @@ struct Mfrc522FileOps;
 impl FileOpener<()> for Mfrc522FileOps {
     fn open(_ctx: &()) -> KernelResult<Self::Wrapper> {
         pr_info!("[MFRC522-RS] File opened\n");
+
         Ok(Box::try_new(Self)?)
     }
 }
@@ -45,7 +51,43 @@ impl FileOpener<()> for Mfrc522FileOps {
 impl FileOperations for Mfrc522FileOps {
     type Wrapper = Box<Self>;
 
-    kernel::declare_file_operations!();
+    kernel::declare_file_operations!(read, write);
+
+    fn read(
+        &self,
+        _file: &File,
+        _data: &mut UserSlicePtrWriter,
+        _offset: u64,
+    ) -> KernelResult<usize> {
+        pr_info!("[MFRC522-RS] Being read from\n");
+
+        Ok(0)
+    }
+
+    fn write(&self, data: &mut UserSlicePtrReader, _: u64) -> KernelResult<usize> {
+        let kernel_vec = data.read_all()?;
+
+        // FIXME: Should we use from_utf8 and return an error on invalid UTF8?
+        // If not, document SAFETY here too
+        let user_input = unsafe { core::str::from_utf8_unchecked(&kernel_vec) };
+
+        pr_info!("[MFRC522-RS] Being written to: {}\n", user_input);
+
+        // TODO: Implement core::convert::To<KernelError> for ParseError?
+        // let cmd = parser::Parse(...)?;
+        let cmd = match Parser::parse(user_input) {
+            Err(_) => return Err(Error::EINVAL),
+            Ok(cmd) => cmd,
+        };
+
+        match cmd.execute() {
+            Err(_) => Err(Error::EINVAL),
+            // FIXME: Once the Command API is reworked, this will make more sense
+            Ok(CommandSuccess::BytesWritten(amount)) => Ok(amount),
+            NoAnswer => Ok(0),
+            _ => Err(Error::EINVAL),
+        }
+    }
 }
 
 struct Mfrc522Driver {
