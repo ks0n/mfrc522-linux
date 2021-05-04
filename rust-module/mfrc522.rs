@@ -4,6 +4,7 @@
 #![feature(allocator_api)]
 
 mod command;
+mod mfrc522_spi;
 mod parser;
 
 use command::CommandSuccess;
@@ -15,10 +16,14 @@ use kernel::prelude::*;
 use kernel::{
     cstr,
     file_operations::{File, FileOpener, FileOperations},
-    miscdev, spi, spi_method,
+    miscdev, spi,
+    spi::SpiDevice,
+    spi_method,
     user_ptr::{UserSlicePtrReader, UserSlicePtrWriter},
     Error,
 };
+
+pub static mut SPI_DEVICE: Option<SpiDevice> = None;
 
 module! {
     type: Mfrc522Driver,
@@ -31,10 +36,19 @@ module! {
 }
 
 spi_method! {
-    fn mfrc522_probe(spi_device: SpiDevice) -> KernelResult {
+    fn mfrc522_probe(mut spi_device: SpiDevice) -> KernelResult {
         pr_info!("[MFRC522-RS] SPI Registered\n");
 
-        Err(kernel::Error::from_kernel_errno(-1))
+        let version = match mfrc522_spi::get_version(&mut spi_device) {
+            Ok(v) => v,
+            Err(_) => return Err(kernel::Error::from_kernel_errno(-1))
+        };
+
+        pr_info!("[MFRC522-RS] MFRC522 {:?} detected\n", version);
+
+        unsafe {SPI_DEVICE = Some(spi_device)};
+
+        Ok(())
     }
 }
 
@@ -80,6 +94,11 @@ impl FileOperations for Mfrc522FileOps {
             Ok(cmd) => cmd,
         };
 
+        if unsafe { SPI_DEVICE.is_none() } {
+            pr_info!("[MFRC522-RS] Can not talk to the device, MFRC522 not present");
+            return Err(Error::EPERM);
+        }
+
         let mut answer = [0u8; command::MAX_DATA_LEN];
 
         // FIXME: We need to store the answer, if some bytes were written, into the driver's
@@ -95,9 +114,8 @@ impl FileOperations for Mfrc522FileOps {
 }
 
 struct Mfrc522Driver {
-    misc: Pin<Box<miscdev::Registration>>,
-    // FIXME: We need to keep ownership of our SPI registration, or else it will get dropped
-    // when we'll return from the init() function
+    _spi: Pin<Box<spi::DriverRegistration>>,
+    _misc: Pin<Box<miscdev::Registration>>,
 }
 
 impl KernelModule for Mfrc522Driver {
@@ -107,11 +125,12 @@ impl KernelModule for Mfrc522Driver {
         let misc =
             miscdev::Registration::new_pinned::<Mfrc522FileOps>(cstr!("mfrc522_chrdev"), None, ())?;
 
-        let mut spi =
-            spi::DriverRegistration::new(&THIS_MODULE, cstr!("mfrc522")).with_probe(mfrc522_probe);
-        spi.register()?;
+        let mut spi = spi::DriverRegistration::new_pinned(&THIS_MODULE, cstr!("mfrc522"))?;
 
-        Ok(Mfrc522Driver { misc })
+        Ok(Mfrc522Driver {
+            _spi: spi,
+            _misc: misc,
+        })
     }
 }
 
