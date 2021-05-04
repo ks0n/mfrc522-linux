@@ -40,10 +40,10 @@ spi_method! {
 
         let version = match mfrc522_spi::get_version(&mut spi_device) {
             Ok(v) => v,
-            Err(e) => return Err(kernel::Error::from_kernel_errno(-1))
+            Err(_) => return Err(kernel::Error::from_kernel_errno(-1))
         };
 
-        pr_info!("[MFRC522-RS] MFRC522 {:?} detected\n");
+        pr_info!("[MFRC522-RS] MFRC522 {:?} detected\n", version);
 
         unsafe {SPI_DEVICE = Some(spi_device)};
 
