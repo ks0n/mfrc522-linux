@@ -80,11 +80,15 @@ impl FileOperations for Mfrc522FileOps {
             Ok(cmd) => cmd,
         };
 
-        match cmd.execute() {
+        let mut answer = [0u8; command::MAX_DATA_LEN];
+
+        // FIXME: We need to store the answer, if some bytes were written, into the driver's
+        // state
+        match cmd.execute(&mut answer) {
             Err(_) => Err(Error::EINVAL),
             // FIXME: Once the Command API is reworked, this will make more sense
             Ok(CommandSuccess::BytesWritten(amount)) => Ok(amount),
-            NoAnswer => Ok(0),
+            Ok(CommandSuccess::NoAnswer) => Ok(0),
             _ => Err(Error::EINVAL),
         }
     }

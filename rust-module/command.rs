@@ -1,6 +1,10 @@
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
 
+/// Answer type in which the executor will write, if necessary. This represents the inner
+/// memory of the MFRC522, and is not guaranteed to be valid ASCII or UTF-8.
+pub type Answer = [u8; MAX_DATA_LEN];
+
 /// Result of a successful command execution
 pub enum CommandSuccess {
     /// Amount of bytes written if any
@@ -94,7 +98,7 @@ impl Command {
         todo!()
     }
 
-    fn mem_read(&self) -> CommandResult {
+    fn mem_read(&self, answer: &mut Answer) -> CommandResult {
         todo!()
     }
 
@@ -107,10 +111,10 @@ impl Command {
     }
 
     /// Execute the required command, sending and receiving information to the MFRC522.
-    pub fn execute(&self) -> CommandResult {
+    pub fn execute(&self, answer: &mut Answer) -> CommandResult {
         match &self.cmd {
             Cmd::MemWrite => self.mem_write(),
-            Cmd::MemRead => self.mem_read(),
+            Cmd::MemRead => self.mem_read(answer),
             Cmd::GetVersion => self.get_version(),
             Cmd::GenRand => self.generate_random_id(),
         }
