@@ -4,8 +4,8 @@
 #![feature(allocator_api)]
 
 mod command;
-mod parser;
 mod mfrc522_spi;
+mod parser;
 
 use command::CommandSuccess;
 use parser::Parser;
@@ -16,13 +16,14 @@ use kernel::prelude::*;
 use kernel::{
     cstr,
     file_operations::{File, FileOpener, FileOperations},
-    miscdev, spi, spi_method,
+    miscdev, spi,
+    spi::SpiDevice,
+    spi_method,
     user_ptr::{UserSlicePtrReader, UserSlicePtrWriter},
     Error,
-    spi::SpiDevice
 };
 
-pub static mut SPI_DEVICE : Option<SpiDevice> = None;
+pub static mut SPI_DEVICE: Option<SpiDevice> = None;
 
 module! {
     type: Mfrc522Driver,
