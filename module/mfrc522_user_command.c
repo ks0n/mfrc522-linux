@@ -98,11 +98,9 @@ static int mem_write(char *data, struct mfrc522_statistics *stats)
 /**
  * Generate a 10-byte wide random ID
  *
- * @param answer Buffer in which to store the answer
- *
  * @return The amount of bytes received on success, -1 on error
  */
-static int generate_random(char *answer, struct mfrc522_statistics *stats)
+static int generate_random(struct mfrc522_statistics *stats)
 {
 	u8 buffer[MFRC522_MEM_SIZE] = { 0 };
 	char char_buffer[MFRC522_ID_SIZE * 2 + 1] = { 0 };
@@ -162,7 +160,7 @@ int mfrc522_execute(struct mfrc522_state *state, char *answer,
 		ret = mem_write(cmd->data, &state->stats);
 		break;
 	case MFRC522_CMD_GEN_RANDOM:
-		ret = generate_random(answer, &state->stats);
+		ret = generate_random(&state->stats);
 		break;
 	case MFRC522_CMD_DEBUG:
 		ret = set_debug(state, cmd);
