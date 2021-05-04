@@ -4,6 +4,7 @@
 #![feature(allocator_api)]
 
 mod command;
+mod mfrc522_spi;
 mod parser;
 
 use command::CommandSuccess;
@@ -15,10 +16,14 @@ use kernel::prelude::*;
 use kernel::{
     cstr,
     file_operations::{File, FileOpener, FileOperations},
-    miscdev, spi, spi_method,
+    miscdev, spi,
+    spi::SpiDevice,
+    spi_method,
     user_ptr::{UserSlicePtrReader, UserSlicePtrWriter},
     Error,
 };
+
+pub static mut SPI_DEVICE: Option<SpiDevice> = None;
 
 module! {
     type: Mfrc522Driver,
@@ -31,10 +36,19 @@ module! {
 }
 
 spi_method! {
-    fn mfrc522_probe(spi_device: SpiDevice) -> KernelResult {
+    fn mfrc522_probe(mut spi_device: SpiDevice) -> KernelResult {
         pr_info!("[MFRC522-RS] SPI Registered\n");
 
-        Err(kernel::Error::from_kernel_errno(-1))
+        let version = match mfrc522_spi::get_version(&mut spi_device) {
+            Ok(v) => v,
+            Err(_) => return Err(kernel::Error::from_kernel_errno(-1))
+        };
+
+        pr_info!("[MFRC522-RS] MFRC522 {:?} detected\n", version);
+
+        unsafe {SPI_DEVICE = Some(spi_device)};
+
+        Ok(())
     }
 }
 
@@ -79,6 +93,11 @@ impl FileOperations for Mfrc522FileOps {
             Err(_) => return Err(Error::EINVAL),
             Ok(cmd) => cmd,
         };
+
+        if unsafe { SPI_DEVICE.is_none() } {
+            pr_info!("[MFRC522-RS] Can not talk to the device, MFRC522 not present");
+            return Err(Error::EPERM);
+        }
 
         match cmd.execute() {
             Err(_) => Err(Error::EINVAL),
