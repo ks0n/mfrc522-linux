@@ -5,6 +5,7 @@
 
 mod command;
 mod parser;
+mod mfrc522_spi;
 
 use command::CommandSuccess;
 use parser::Parser;
