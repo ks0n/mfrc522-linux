@@ -1,3 +1,5 @@
+use crate::mfrc522_spi;
+
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
 
@@ -99,7 +101,10 @@ impl Command {
     }
 
     fn get_version(&self) -> CommandResult {
-        todo!()
+        // As we can't get here if the device is not present, unwrap is safe
+        mfrc522_spi::get_version(unsafe { &mut crate::SPI_DEVICE.unwrap() });
+
+        Ok(CommandSuccess::NoAnswer)
     }
 
     fn generate_random_id(&self) -> CommandResult {

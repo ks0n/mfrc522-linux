@@ -2,11 +2,11 @@ use kernel::spi::{Spi, SpiDevice};
 use kernel::{KernelResult, Error};
 use core::{slice, mem};
 
-enum Mfrc522Register {
+pub enum Mfrc522Register {
     Version = 0x37,
 }
 
-enum Mfrc522Version{
+pub enum Mfrc522Version{
     Version1 = 0x91,
     Version2 = 0x92,
     NotMfrc522,
@@ -59,7 +59,7 @@ fn register_read(dev: &mut SpiDevice, reg: Mfrc522Register, read_buf: &mut [u8],
     Ok(())
 }
 
-fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version, Error> {
+pub fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version, Error> {
     let mut version = [0 as u8];
 
     let ret = register_read(dev, Mfrc522Register::Version, &mut version, 1);
