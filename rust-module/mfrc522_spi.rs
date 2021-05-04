@@ -24,6 +24,7 @@ impl From<u8> for Mfrc522Version {
 }
 
 #[derive(Clone, Copy)]
+#[repr(u8)]
 enum AddressByteMode {
     Read = 0,
     Write = 1,
@@ -64,14 +65,9 @@ fn register_read(dev: &mut SpiDevice, reg: Mfrc522Register, read_buf: &mut [u8],
 }
 
 pub fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version, Error> {
-    let mut version = [0 as u8];
+    let mut version = [0u8];
 
-    let ret = register_read(dev, Mfrc522Register::Version, &mut version, 1);
-
-    match ret {
-        Err(e) => return Err(e),
-        _ => ()
-    };
+    register_read(dev, Mfrc522Register::Version, &mut version, 1)?;
 
     match Mfrc522Version::from(version[0]) {
         NotMfrc522 => Err(Error::EINVAL),
