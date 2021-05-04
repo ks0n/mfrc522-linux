@@ -2,6 +2,7 @@ use kernel::spi::{Spi, SpiDevice};
 use kernel::{KernelResult, Error};
 use core::{slice, mem};
 
+#[derive(Clone, Copy)]
 pub enum Mfrc522Register {
     Version = 0x37,
 }
@@ -22,6 +23,7 @@ impl From<u8> for Mfrc522Version {
     }
 }
 
+#[derive(Clone, Copy)]
 enum AddressByteMode {
     Read = 0,
     Write = 1,
@@ -40,16 +42,18 @@ impl AddressByte {
             mode,
         }
     }
+
+    fn to_byte(&self) -> u8 {
+        (self.addr as u8 & 0b111111) << 1 | self.mode as u8 & 0b1
+    }
 }
 
 fn register_read(dev: &mut SpiDevice, reg: Mfrc522Register, read_buf: &mut [u8], read_len: u8) -> KernelResult {
-    let address_byte = AddressByte::new(reg, AddressByteMode::Read);
-    let address_byte = unsafe { 
-        slice::from_raw_parts((&address_byte as *const AddressByte) as *const u8, mem::size_of::<AddressByte>())
-    };
+    let address_byte = AddressByte::new(reg, AddressByteMode::Read).to_byte();
+    let address_byte_slice = &[address_byte];
 
     for i in 0..read_len as usize {
-        let ret = Spi::write_then_read(dev, address_byte, 1, &mut read_buf[i..i+1], 1);
+        let ret = Spi::write_then_read(dev, address_byte_slice, 1, &mut read_buf[i..i+1], 1);
 
         if ret.is_err() {
             return ret;
