@@ -2,11 +2,14 @@ use core::{mem, slice};
 use kernel::spi::{Spi, SpiDevice};
 use kernel::{Error, KernelResult};
 
+/// Address of the MFRC522 registers, Table 20 section 9.2
 #[derive(Clone, Copy)]
 pub enum Mfrc522Register {
+    /// VersionReg register, section 9.3.4.8
     Version = 0x37,
 }
 
+/// Describe the different possible value of VersionReg register, section 9.3.4.8
 #[derive(Debug)]
 pub enum Mfrc522Version {
     Version1 = 0x91,
@@ -24,6 +27,7 @@ impl From<u8> for Mfrc522Version {
     }
 }
 
+/// Represent the SPI address byte mode, Table 8 of section 8.1.2.3
 #[derive(Clone, Copy)]
 #[repr(u8)]
 enum AddressByteMode {
@@ -31,6 +35,7 @@ enum AddressByteMode {
     Write = 1,
 }
 
+/// Represent the SPI address byte, section 8.1.2.3
 #[repr(packed)]
 struct AddressByte {
     addr: Mfrc522Register,
@@ -42,11 +47,14 @@ impl AddressByte {
         AddressByte { addr, mode }
     }
 
+    /// Convert the AddressByte to a real byte encoded as described in Table 8
+    /// of section 8.1.2.3
     fn to_byte(&self) -> u8 {
         (self.addr as u8 & 0b00111111) << 1 | self.mode as u8 & 0b1
     }
 }
 
+/// Read an MFRC522 register
 fn register_read(
     dev: &mut SpiDevice,
     reg: Mfrc522Register,
@@ -63,6 +71,7 @@ fn register_read(
     Ok(())
 }
 
+/// Get the MFRC522 version stored in VersionReg register, section 9.3.4.8
 pub fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version, Error> {
     let mut version = [0u8];
 
