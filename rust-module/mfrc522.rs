@@ -125,7 +125,7 @@ impl KernelModule for Mfrc522Driver {
         let misc =
             miscdev::Registration::new_pinned::<Mfrc522FileOps>(cstr!("mfrc522_chrdev"), None, ())?;
 
-        let mut spi = spi::DriverRegistration::new_pinned(&THIS_MODULE, cstr!("mfrc522"))?;
+        let spi = spi::DriverRegistration::new_pinned(&THIS_MODULE, cstr!("mfrc522"), Some(mfrc522_probe), None, None)?;
 
         Ok(Mfrc522Driver {
             _spi: spi,
