@@ -80,7 +80,7 @@ impl Mfrc522Spi {
         reg: Mfrc522Register,
         value: u8
     ) -> KernelResult {
-        let address_byte = AddressByte::new(reg, AddressByteMode::Read).to_byte();
+        let address_byte = AddressByte::new(reg, AddressByteMode::Write).to_byte();
         let data = &[address_byte, value];
 
         Spi::write(dev, data, 2)
@@ -93,7 +93,7 @@ impl Mfrc522Spi {
         Mfrc522Spi::register_read(dev, Mfrc522Register::Version, &mut version, 1)?;
 
         match Mfrc522Version::from(version[0]) {
-            NotMfrc522 => Err(Error::EINVAL),
+            Mfrc522Version::NotMfrc522 => Err(Error::EINVAL),
             val => Ok(val),
         }
     }
