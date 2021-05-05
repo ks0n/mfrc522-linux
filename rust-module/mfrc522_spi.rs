@@ -1,5 +1,5 @@
 use kernel::spi::{Spi, SpiDevice};
-use kernel::{Error, KernelResult};
+use kernel::{pr_info, Error, KernelResult};
 
 /// Address of the MFRC522 registers, Table 20 section 9.2
 #[derive(Clone, Copy)]
