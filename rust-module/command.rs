@@ -1,4 +1,4 @@
-use crate::mfrc522_spi::Mfrc522Spi;
+use crate::mfrc522_spi::{Mfrc522Spi, Mfrc522Command};
 
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
@@ -17,11 +17,8 @@ pub enum CommandSuccess {
     NoAnswer,
 }
 
-/// Possible causes of an error during command execution
-pub enum CommandExecutionError {}
-
 /// Return type of command execution functions
-pub type CommandResult = Result<CommandSuccess, CommandExecutionError>;
+pub type CommandResult = Result<CommandSuccess, kernel::Error>;
 
 /// Possible commands accepted by the MFRC522
 #[derive(Debug, PartialEq)]
@@ -97,7 +94,13 @@ impl Command {
     }
 
     fn mem_write(&self) -> CommandResult {
-        todo!()
+        let dev = unsafe { &mut crate::SPI_DEVICE.unwrap() };
+
+        // FIXME: No unwrap
+        Mfrc522Spi::fifo_write(dev, &self.arg.as_ref().unwrap().data)?;
+        Mfrc522Spi::send_command(dev, Mfrc522Command::Mem)?;
+
+        Ok(CommandSuccess::BytesWritten(MAX_DATA_LEN))
     }
 
     fn mem_read(&self, answer: &mut Answer) -> CommandResult {
@@ -106,7 +109,7 @@ impl Command {
 
     fn get_version(&self) -> CommandResult {
         // As we can't get here if the device is not present, unwrap is safe
-        Mfrc522Spi::get_version(unsafe { &mut crate::SPI_DEVICE.unwrap() });
+        Mfrc522Spi::get_version(unsafe { &mut crate::SPI_DEVICE.unwrap() })?;
 
         Ok(CommandSuccess::NoAnswer)
     }
