@@ -3,11 +3,16 @@ use kernel::{pr_info, Error, KernelResult};
 
 /// Address of the MFRC522 registers, Table 20 section 9.2
 #[derive(Clone, Copy)]
+#[allow(dead_code)]
 pub enum Mfrc522Register {
     /// VersionReg register, section 9.3.4.8
     Version = 0x37,
     /// FIFO Level register, section 9.3.1.11
     FifoLevel = 0xA,
+    /// FIFO Data register, section FIXME
+    FifoData = 0x9,
+    /// Command register, section FIXME
+    Command = 0x1,
 }
 
 /// Describe the different possible value of VersionReg register, section 9.3.4.8
@@ -55,6 +60,77 @@ impl AddressByte {
     }
 }
 
+struct Mfrc522CommandByte {
+    pub cmd: Mfrc522Command,
+    pub power: Mfrc522PowerDown,
+    pub receiver: Mfrc522Receiver,
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy)]
+#[allow(dead_code)]
+enum Mfrc522PowerDown {
+    Off = 0x0,
+    On = 0x1,
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy)]
+#[allow(dead_code)]
+enum Mfrc522Receiver {
+    Off = 0x0,
+    On = 0x1,
+}
+
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq)]
+#[allow(dead_code)]
+pub enum Mfrc522Command {
+    Idle = 0b0000,
+    Mem = 0b0001,
+    Generaterandomid = 0b0010,
+    CalcCrc = 0b0011,
+    Transmit = 0b0100,
+    NoCmdChange = 0b0111,
+    ReCeive = 0b1000,
+    Transceive = 0b1100,
+    MfAuthent = 0b1110,
+    SoftReset = 0b1111,
+}
+
+// FIXME: Implement TryFrom for enums instead
+macro_rules! from_byte {
+    ($value:ident, $t:ty) => {
+        unsafe { core::mem::transmute::<u8, $t>($value) }
+    }
+}
+
+impl Mfrc522CommandByte {
+    pub fn new(cmd: Mfrc522Command, power: Mfrc522PowerDown, receiver: Mfrc522Receiver) -> Self {
+        Self {
+            cmd,
+            power,
+            receiver,
+        }
+    }
+
+    pub fn to_byte(&self) -> u8 {
+        (self.receiver as u8) << 5 | (self.power as u8) << 4 | (self.cmd as u8)
+    }
+
+    pub fn from_byte(byte: u8) -> Self {
+        let receiver = byte >> 5;
+        let power = byte >> 4 & 0x1;
+        let cmd = byte & 0xF;
+
+        Mfrc522CommandByte::new(
+            from_byte!(cmd, Mfrc522Command),
+            from_byte!(power, Mfrc522PowerDown),
+            from_byte!(receiver, Mfrc522Receiver),
+        )
+    }
+}
+
 /// SPI API specific to the MFRC522
 pub struct Mfrc522Spi;
 
@@ -77,11 +153,7 @@ impl Mfrc522Spi {
     }
 
     /// Write to an MFRC522 register
-    fn register_write(
-        dev: &mut SpiDevice,
-        reg: Mfrc522Register,
-        value: u8
-    ) -> KernelResult {
+    fn register_write(dev: &mut SpiDevice, reg: Mfrc522Register, value: u8) -> KernelResult {
         let address_byte = AddressByte::new(reg, AddressByteMode::Write).to_byte();
         let data = &[address_byte, value];
 
@@ -111,5 +183,45 @@ impl Mfrc522Spi {
         pr_info!("[MFRC522-RS] Fifo level: {}\n", fifo_level);
 
         Ok(fifo_level)
+    }
+
+    /// Write data to the MFRC522's FIFO
+    pub fn fifo_write(dev: &mut SpiDevice, data: &[u8]) -> KernelResult {
+        for byte in data {
+            Mfrc522Spi::register_write(dev, Mfrc522Register::FifoData, *byte)?;
+        }
+
+        Ok(())
+    }
+
+    /// Wait for a command to finish executing
+    fn wait_for_command(dev: &mut SpiDevice) -> KernelResult {
+        loop {
+            let current_cmd = Mfrc522Spi::read_command(dev)?;
+            if current_cmd == Mfrc522Command::Idle {
+                break;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Send a command to the MFRC522
+    pub fn send_command(dev: &mut SpiDevice, cmd: Mfrc522Command) -> KernelResult {
+        let cmd_byte =
+            Mfrc522CommandByte::new(cmd, Mfrc522PowerDown::Off, Mfrc522Receiver::On).to_byte();
+
+        Mfrc522Spi::register_write(dev, Mfrc522Register::Command, cmd_byte)?;
+
+        Mfrc522Spi::wait_for_command(dev)
+    }
+
+    /// Read the current command byte
+    pub fn read_command(dev: &mut SpiDevice) -> KernelResult<Mfrc522Command> {
+        let mut cmd_byte = [0u8];
+
+        Mfrc522Spi::register_read(dev, Mfrc522Register::Command, &mut cmd_byte, 1)?;
+
+        Ok(Mfrc522CommandByte::from_byte(cmd_byte[0]).cmd)
     }
 }
