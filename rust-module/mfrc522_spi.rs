@@ -1,4 +1,3 @@
-use core::{mem, slice};
 use kernel::spi::{Spi, SpiDevice};
 use kernel::{Error, KernelResult};
 
@@ -54,31 +53,48 @@ impl AddressByte {
     }
 }
 
-/// Read an MFRC522 register
-fn register_read(
-    dev: &mut SpiDevice,
-    reg: Mfrc522Register,
-    read_buf: &mut [u8],
-    read_len: u8,
-) -> KernelResult {
-    let address_byte = AddressByte::new(reg, AddressByteMode::Read).to_byte();
-    let address_byte_slice = &[address_byte];
+/// SPI API specific to the MFRC522
+pub struct Mfrc522Spi;
 
-    for i in 0..read_len as usize {
-        Spi::write_then_read(dev, address_byte_slice, 1, &mut read_buf[i..i + 1], 1)?;
+impl Mfrc522Spi {
+    /// Read an MFRC522 register
+    fn register_read(
+        dev: &mut SpiDevice,
+        reg: Mfrc522Register,
+        read_buf: &mut [u8],
+        read_len: u8,
+    ) -> KernelResult {
+        let address_byte = AddressByte::new(reg, AddressByteMode::Read).to_byte();
+        let address_byte_slice = &[address_byte];
+
+        for i in 0..read_len as usize {
+            Spi::write_then_read(dev, address_byte_slice, 1, &mut read_buf[i..i + 1], 1)?;
+        }
+
+        Ok(())
     }
 
-    Ok(())
-}
+    /// Write to an MFRC522 register
+    fn register_write(
+        dev: &mut SpiDevice,
+        reg: Mfrc522Register,
+        value: u8
+    ) -> KernelResult {
+        let address_byte = AddressByte::new(reg, AddressByteMode::Read).to_byte();
+        let data = &[address_byte, value];
 
-/// Get the MFRC522 version stored in VersionReg register, section 9.3.4.8
-pub fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version, Error> {
-    let mut version = [0u8];
+        Spi::write(dev, data, 2)
+    }
 
-    register_read(dev, Mfrc522Register::Version, &mut version, 1)?;
+    /// Get the MFRC522 version stored in VersionReg register, section 9.3.4.8
+    pub fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version, Error> {
+        let mut version = [0u8];
 
-    match Mfrc522Version::from(version[0]) {
-        NotMfrc522 => Err(Error::EINVAL),
-        val => Ok(val),
+        Mfrc522Spi::register_read(dev, Mfrc522Register::Version, &mut version, 1)?;
+
+        match Mfrc522Version::from(version[0]) {
+            NotMfrc522 => Err(Error::EINVAL),
+            val => Ok(val),
+        }
     }
 }

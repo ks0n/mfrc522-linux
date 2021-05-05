@@ -9,6 +9,7 @@ mod parser;
 
 use command::CommandSuccess;
 use parser::Parser;
+use mfrc522_spi::Mfrc522Spi;
 
 use alloc::boxed::Box;
 use core::pin::Pin;
@@ -39,7 +40,7 @@ spi_method! {
     fn mfrc522_probe(mut spi_device: SpiDevice) -> KernelResult {
         pr_info!("[MFRC522-RS] SPI Registered\n");
 
-        let version = match mfrc522_spi::get_version(&mut spi_device) {
+        let version = match Mfrc522Spi::get_version(&mut spi_device) {
             Ok(v) => v,
             Err(_) => return Err(kernel::Error::from_kernel_errno(-1))
         };
