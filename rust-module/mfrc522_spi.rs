@@ -87,7 +87,7 @@ impl Mfrc522Spi {
     }
 
     /// Get the MFRC522 version stored in VersionReg register, section 9.3.4.8
-    pub fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version, Error> {
+    pub fn get_version(dev: &mut SpiDevice) -> KernelResult<Mfrc522Version> {
         let mut version = [0u8];
 
         Mfrc522Spi::register_read(dev, Mfrc522Register::Version, &mut version, 1)?;
@@ -96,5 +96,10 @@ impl Mfrc522Spi {
             Mfrc522Version::NotMfrc522 => Err(Error::EINVAL),
             val => Ok(val),
         }
+    }
+
+    /// Get the current FIFO level of the MFRC522
+    pub fn fifo_level(dev: &mut SpiDevice) -> KernelResult<u8> {
+        todo!()
     }
 }
