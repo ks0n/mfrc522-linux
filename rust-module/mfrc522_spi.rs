@@ -6,6 +6,8 @@ use kernel::{Error, KernelResult};
 pub enum Mfrc522Register {
     /// VersionReg register, section 9.3.4.8
     Version = 0x37,
+    /// FIFO Level register, section 9.3.1.11
+    FifoLevel = 0xA,
 }
 
 /// Describe the different possible value of VersionReg register, section 9.3.4.8
@@ -100,6 +102,14 @@ impl Mfrc522Spi {
 
     /// Get the current FIFO level of the MFRC522
     pub fn fifo_level(dev: &mut SpiDevice) -> KernelResult<u8> {
-        todo!()
+        let mut level = [0u8];
+
+        Mfrc522Spi::register_read(dev, Mfrc522Register::FifoLevel, &mut level, 1)?;
+
+        let fifo_level = level[0] & 0x7F; // FIFO Level Mask
+
+        pr_info!("[MFRC522-RS] Fifo level: {}\n", fifo_level);
+
+        Ok(fifo_level)
     }
 }
