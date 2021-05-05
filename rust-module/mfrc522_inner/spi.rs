@@ -1,6 +1,8 @@
 use kernel::spi::{Spi, SpiDevice};
 use kernel::{pr_info, Error, KernelResult};
 
+use super::{Mfrc522CommandByte, Mfrc522Command, Mfrc522PowerDown, Mfrc522Receiver};
+
 /// Address of the MFRC522 registers, Table 20 section 9.2
 #[derive(Clone, Copy)]
 #[allow(dead_code)]
@@ -57,77 +59,6 @@ impl AddressByte {
     /// of section 8.1.2.3
     fn to_byte(&self) -> u8 {
         (self.addr as u8 & 0b00111111) << 1 | self.mode as u8 & 0b1
-    }
-}
-
-struct Mfrc522CommandByte {
-    pub cmd: Mfrc522Command,
-    pub power: Mfrc522PowerDown,
-    pub receiver: Mfrc522Receiver,
-}
-
-#[repr(u8)]
-#[derive(Clone, Copy)]
-#[allow(dead_code)]
-enum Mfrc522PowerDown {
-    Off = 0x0,
-    On = 0x1,
-}
-
-#[repr(u8)]
-#[derive(Clone, Copy)]
-#[allow(dead_code)]
-enum Mfrc522Receiver {
-    Off = 0x0,
-    On = 0x1,
-}
-
-#[repr(u8)]
-#[derive(Clone, Copy, PartialEq)]
-#[allow(dead_code)]
-pub enum Mfrc522Command {
-    Idle = 0b0000,
-    Mem = 0b0001,
-    Generaterandomid = 0b0010,
-    CalcCrc = 0b0011,
-    Transmit = 0b0100,
-    NoCmdChange = 0b0111,
-    ReCeive = 0b1000,
-    Transceive = 0b1100,
-    MfAuthent = 0b1110,
-    SoftReset = 0b1111,
-}
-
-impl Mfrc522CommandByte {
-    pub fn new(cmd: Mfrc522Command, power: Mfrc522PowerDown, receiver: Mfrc522Receiver) -> Self {
-        Self {
-            cmd,
-            power,
-            receiver,
-        }
-    }
-
-    pub fn to_byte(&self) -> u8 {
-        (self.receiver as u8) << 5 | (self.power as u8) << 4 | (self.cmd as u8)
-    }
-
-    pub fn from_byte(byte: u8) -> Self {
-        let receiver = byte >> 5;
-        let power = byte >> 4 & 0x1;
-        let cmd = byte & 0xF;
-
-        // FIXME: Implement TryFrom for enums instead
-        macro_rules! from_byte {
-            ($value:ident, $t:ty) => {
-                unsafe { core::mem::transmute::<u8, $t>($value) }
-            }
-        }
-
-        Mfrc522CommandByte::new(
-            from_byte!(cmd, Mfrc522Command),
-            from_byte!(power, Mfrc522PowerDown),
-            from_byte!(receiver, Mfrc522Receiver),
-        )
     }
 }
 

@@ -3,13 +3,13 @@
 #![no_std]
 #![feature(allocator_api)]
 
+mod mfrc522_inner;
 mod command;
-mod mfrc522_spi;
 mod parser;
 
 use command::CommandSuccess;
 use parser::Parser;
-use mfrc522_spi::Mfrc522Spi;
+use mfrc522_inner::Mfrc522Spi;
 
 use alloc::boxed::Box;
 use core::pin::Pin;

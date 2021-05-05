@@ -1,4 +1,4 @@
-use crate::mfrc522_spi::{Mfrc522Spi, Mfrc522Command};
+use crate::mfrc522_inner::{Mfrc522Spi, Mfrc522Command};
 
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
