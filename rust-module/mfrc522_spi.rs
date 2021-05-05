@@ -98,13 +98,6 @@ pub enum Mfrc522Command {
     SoftReset = 0b1111,
 }
 
-// FIXME: Implement TryFrom for enums instead
-macro_rules! from_byte {
-    ($value:ident, $t:ty) => {
-        unsafe { core::mem::transmute::<u8, $t>($value) }
-    }
-}
-
 impl Mfrc522CommandByte {
     pub fn new(cmd: Mfrc522Command, power: Mfrc522PowerDown, receiver: Mfrc522Receiver) -> Self {
         Self {
@@ -122,6 +115,13 @@ impl Mfrc522CommandByte {
         let receiver = byte >> 5;
         let power = byte >> 4 & 0x1;
         let cmd = byte & 0xF;
+
+        // FIXME: Implement TryFrom for enums instead
+        macro_rules! from_byte {
+            ($value:ident, $t:ty) => {
+                unsafe { core::mem::transmute::<u8, $t>($value) }
+            }
+        }
 
         Mfrc522CommandByte::new(
             from_byte!(cmd, Mfrc522Command),
