@@ -2,6 +2,7 @@ use kernel::spi::{Spi, SpiDevice};
 use kernel::{pr_info, Error, KernelResult};
 
 use super::{Mfrc522CommandByte, Mfrc522Command, Mfrc522PowerDown, Mfrc522Receiver};
+const FIFO_LEVEL_REG_FLUSH_SHIFT: u8 = 7;
 
 /// Address of the MFRC522 registers, Table 20 section 9.2
 #[derive(Clone, Copy)]
@@ -135,7 +136,7 @@ impl Mfrc522Spi {
     }
 
     pub fn fifo_flush(dev: &mut SpiDevice) -> KernelResult {
-        let flush_byte: u8 = 1u8 << 7;
+        let flush_byte: u8 = 1u8 << FIFO_LEVEL_REG_FLUSH_SHIFT;
 
         Mfrc522Spi::register_write(dev, Mfrc522Register::FifoLevel, flush_byte)?;
 
