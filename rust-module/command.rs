@@ -93,12 +93,9 @@ impl Command {
         Command { cmd, arg: None }
     }
 
-    fn mem_write(&self) -> CommandResult {
-        let dev = unsafe { &mut crate::SPI_DEVICE.unwrap() };
-
-        // FIXME: No unwrap
-        Mfrc522Spi::fifo_write(dev, &self.arg.as_ref().unwrap().data)?;
-        Mfrc522Spi::send_command(dev, Mfrc522Command::Mem)?;
+    fn mem_write(&self, spi_dev: &mut crate::SpiDevice) -> CommandResult {
+        Mfrc522Spi::fifo_write(spi_dev, &self.arg.as_ref().unwrap().data)?;
+        Mfrc522Spi::send_command(spi_dev, Mfrc522Command::Mem)?;
 
         Ok(CommandSuccess::BytesWritten(MAX_DATA_LEN))
     }
@@ -128,7 +125,7 @@ impl Command {
         let mut spi_dev = unsafe { &mut crate::SPI_DEVICE.unwrap() };
 
         match &self.cmd {
-            Cmd::MemWrite => self.mem_write(),
+            Cmd::MemWrite => self.mem_write(&mut spi_dev),
             Cmd::MemRead => self.mem_read(&mut spi_dev, answer),
             Cmd::GetVersion => self.get_version(&mut spi_dev),
             Cmd::GenRand => self.generate_random_id(),
