@@ -116,11 +116,28 @@ impl Mfrc522Spi {
         Ok(fifo_level)
     }
 
+    /// Read data from the MFRC522's FIFO
+    pub fn fifo_read(dev: &mut SpiDevice, data: &mut [u8]) -> KernelResult<u8> {
+        let fifo_level = Self::fifo_level(dev)?;
+
+        Self::register_read(dev, Mfrc522Register::FifoData, data, fifo_level)?;
+
+        Ok(fifo_level)
+    }
+
     /// Write data to the MFRC522's FIFO
     pub fn fifo_write(dev: &mut SpiDevice, data: &[u8]) -> KernelResult {
         for byte in data {
             Mfrc522Spi::register_write(dev, Mfrc522Register::FifoData, *byte)?;
         }
+
+        Ok(())
+    }
+
+    pub fn fifo_flush(dev: &mut SpiDevice) -> KernelResult {
+        let flush_byte: u8 = 1u8 << 7;
+
+        Mfrc522Spi::register_write(dev, Mfrc522Register::FifoLevel, flush_byte)?;
 
         Ok(())
     }
@@ -156,3 +173,4 @@ impl Mfrc522Spi {
         Ok(Mfrc522CommandByte::from_byte(cmd_byte[0]).cmd)
     }
 }
+
