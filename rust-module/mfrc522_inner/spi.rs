@@ -1,13 +1,20 @@
 use kernel::spi::{Spi, SpiDevice};
 use kernel::{pr_info, Error, KernelResult};
 
+use super::{Mfrc522CommandByte, Mfrc522Command, Mfrc522PowerDown, Mfrc522Receiver};
+
 /// Address of the MFRC522 registers, Table 20 section 9.2
 #[derive(Clone, Copy)]
+#[allow(dead_code)]
 pub enum Mfrc522Register {
     /// VersionReg register, section 9.3.4.8
     Version = 0x37,
     /// FIFO Level register, section 9.3.1.11
     FifoLevel = 0xA,
+    /// FIFO Data register, section FIXME
+    FifoData = 0x9,
+    /// Command register, section FIXME
+    Command = 0x1,
 }
 
 /// Describe the different possible value of VersionReg register, section 9.3.4.8
@@ -77,11 +84,7 @@ impl Mfrc522Spi {
     }
 
     /// Write to an MFRC522 register
-    fn register_write(
-        dev: &mut SpiDevice,
-        reg: Mfrc522Register,
-        value: u8
-    ) -> KernelResult {
+    fn register_write(dev: &mut SpiDevice, reg: Mfrc522Register, value: u8) -> KernelResult {
         let address_byte = AddressByte::new(reg, AddressByteMode::Write).to_byte();
         let data = &[address_byte, value];
 
@@ -111,5 +114,45 @@ impl Mfrc522Spi {
         pr_info!("[MFRC522-RS] Fifo level: {}\n", fifo_level);
 
         Ok(fifo_level)
+    }
+
+    /// Write data to the MFRC522's FIFO
+    pub fn fifo_write(dev: &mut SpiDevice, data: &[u8]) -> KernelResult {
+        for byte in data {
+            Mfrc522Spi::register_write(dev, Mfrc522Register::FifoData, *byte)?;
+        }
+
+        Ok(())
+    }
+
+    /// Wait for a command to finish executing
+    fn wait_for_command(dev: &mut SpiDevice) -> KernelResult {
+        loop {
+            let current_cmd = Mfrc522Spi::read_command(dev)?;
+            if current_cmd == Mfrc522Command::Idle {
+                break;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Send a command to the MFRC522
+    pub fn send_command(dev: &mut SpiDevice, cmd: Mfrc522Command) -> KernelResult {
+        let cmd_byte =
+            Mfrc522CommandByte::new(cmd, Mfrc522PowerDown::Off, Mfrc522Receiver::On).to_byte();
+
+        Mfrc522Spi::register_write(dev, Mfrc522Register::Command, cmd_byte)?;
+
+        Mfrc522Spi::wait_for_command(dev)
+    }
+
+    /// Read the current command byte
+    pub fn read_command(dev: &mut SpiDevice) -> KernelResult<Mfrc522Command> {
+        let mut cmd_byte = [0u8];
+
+        Mfrc522Spi::register_read(dev, Mfrc522Register::Command, &mut cmd_byte, 1)?;
+
+        Ok(Mfrc522CommandByte::from_byte(cmd_byte[0]).cmd)
     }
 }
