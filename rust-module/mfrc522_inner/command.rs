@@ -31,7 +31,7 @@ pub enum Mfrc522Receiver {
 pub enum Mfrc522Command {
     Idle = 0b0000,
     Mem = 0b0001,
-    Generaterandomid = 0b0010,
+    GenerateRandomId = 0b0010,
     CalcCrc = 0b0011,
     Transmit = 0b0100,
     NoCmdChange = 0b0111,
