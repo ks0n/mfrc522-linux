@@ -41,8 +41,8 @@ impl From<u8> for Mfrc522Version {
 #[derive(Clone, Copy)]
 #[repr(u8)]
 enum AddressByteMode {
-    Read = 0,
-    Write = 1,
+    Write = 0,
+    Read = 1,
 }
 
 /// Represent the SPI address byte, section 8.1.2.3
@@ -60,7 +60,7 @@ impl AddressByte {
     /// Convert the AddressByte to a real byte encoded as described in Table 8
     /// of section 8.1.2.3
     fn to_byte(&self) -> u8 {
-        (self.addr as u8 & 0b00111111) << 1 | self.mode as u8 & 0b1
+        (((self.mode as u8) & 0b1) << 7) | (((self.addr as u8) & 0b00111111) << 1) & 0xFE
     }
 }
 
@@ -75,6 +75,8 @@ impl Mfrc522Spi {
         read_buf: &mut [u8],
         read_len: u8,
     ) -> KernelResult {
+        pr_info!("[MFRC522-RS] register_read\n");
+
         let address_byte = AddressByte::new(reg, AddressByteMode::Read).to_byte();
         let address_byte_slice = &[address_byte];
 
@@ -97,7 +99,11 @@ impl Mfrc522Spi {
     pub fn get_version(dev: &mut SpiDevice) -> KernelResult<Mfrc522Version> {
         let mut version = [0u8];
 
+        pr_info!("[MFRC522-RS] get_version\n");
+
         Mfrc522Spi::register_read(dev, Mfrc522Register::Version, &mut version, 1)?;
+
+        pr_info!("[MFRC522-RS] version: {:#X}\n", version[0]);
 
         match Mfrc522Version::from(version[0]) {
             Mfrc522Version::NotMfrc522 => Err(Error::EINVAL),
