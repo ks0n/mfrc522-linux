@@ -1,7 +1,8 @@
 use kernel::spi::{Spi, SpiDevice};
 use kernel::{pr_info, Error, KernelResult};
 
-use super::{Mfrc522CommandByte, Mfrc522Command, Mfrc522PowerDown, Mfrc522Receiver};
+use super::{Mfrc522Command, Mfrc522CommandByte, Mfrc522PowerDown, Mfrc522Receiver};
+
 const FIFO_LEVEL_REG_FLUSH_SHIFT: u8 = 7;
 
 /// Address of the MFRC522 registers, Table 20 section 9.2
@@ -174,4 +175,3 @@ impl Mfrc522Spi {
         Ok(Mfrc522CommandByte::from_byte(cmd_byte[0]).cmd)
     }
 }
-

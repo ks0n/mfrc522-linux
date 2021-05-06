@@ -3,13 +3,13 @@
 #![no_std]
 #![feature(allocator_api)]
 
-mod mfrc522_inner;
 mod command;
+mod mfrc522_inner;
 mod parser;
 
 use command::CommandSuccess;
-use parser::Parser;
 use mfrc522_inner::Mfrc522Spi;
+use parser::Parser;
 
 use alloc::boxed::Box;
 use core::pin::Pin;
@@ -126,7 +126,13 @@ impl KernelModule for Mfrc522Driver {
         let misc =
             miscdev::Registration::new_pinned::<Mfrc522FileOps>(cstr!("mfrc522_chrdev"), None, ())?;
 
-        let spi = spi::DriverRegistration::new_pinned(&THIS_MODULE, cstr!("mfrc522"), Some(mfrc522_probe), None, None)?;
+        let spi = spi::DriverRegistration::new_pinned(
+            &THIS_MODULE,
+            cstr!("mfrc522"),
+            Some(mfrc522_probe),
+            None,
+            None,
+        )?;
 
         Ok(Mfrc522Driver {
             _spi: spi,
