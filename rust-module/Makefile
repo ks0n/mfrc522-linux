@@ -8,7 +8,7 @@ modules:
 	$(MAKE) modules
 
 fmt:
-	rustfmt *.rs
+	rustfmt $$(find . -name "*.rs")
 
 clean:
 	$(MAKE) clean

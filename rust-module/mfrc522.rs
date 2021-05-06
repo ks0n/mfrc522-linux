@@ -41,10 +41,11 @@ spi_method! {
     fn mfrc522_probe(mut spi_device: SpiDevice) -> KernelResult {
         pr_info!("[MFRC522-RS] SPI Registered\n");
 
+        // FIXME: Provide safe API for max_speed_hz instead
         unsafe {
-        if (*(spi_device.to_ptr())).max_speed_hz as u32 > MAX_SPI_CLOCK_SPEED {
-            (*(spi_device.to_ptr())).max_speed_hz = MAX_SPI_CLOCK_SPEED;
-        }
+            if (*(spi_device.to_ptr())).max_speed_hz as u32 > MAX_SPI_CLOCK_SPEED {
+                (*(spi_device.to_ptr())).max_speed_hz = MAX_SPI_CLOCK_SPEED;
+            }
         }
 
         let version = match Mfrc522Spi::get_version(&mut spi_device) {
