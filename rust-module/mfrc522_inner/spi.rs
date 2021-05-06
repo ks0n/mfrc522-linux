@@ -1,7 +1,9 @@
 use kernel::spi::{Spi, SpiDevice};
 use kernel::{pr_info, Error, KernelResult};
 
-use super::{Mfrc522CommandByte, Mfrc522Command, Mfrc522PowerDown, Mfrc522Receiver};
+use super::{Mfrc522Command, Mfrc522CommandByte, Mfrc522PowerDown, Mfrc522Receiver};
+
+const FIFO_LEVEL_REG_FLUSH_SHIFT: u8 = 7;
 
 /// Address of the MFRC522 registers, Table 20 section 9.2
 #[derive(Clone, Copy)]
@@ -116,11 +118,28 @@ impl Mfrc522Spi {
         Ok(fifo_level)
     }
 
+    /// Read data from the MFRC522's FIFO
+    pub fn fifo_read(dev: &mut SpiDevice, data: &mut [u8]) -> KernelResult<u8> {
+        let fifo_level = Self::fifo_level(dev)?;
+
+        Self::register_read(dev, Mfrc522Register::FifoData, data, fifo_level)?;
+
+        Ok(fifo_level)
+    }
+
     /// Write data to the MFRC522's FIFO
     pub fn fifo_write(dev: &mut SpiDevice, data: &[u8]) -> KernelResult {
         for byte in data {
             Mfrc522Spi::register_write(dev, Mfrc522Register::FifoData, *byte)?;
         }
+
+        Ok(())
+    }
+
+    pub fn fifo_flush(dev: &mut SpiDevice) -> KernelResult {
+        let flush_byte: u8 = 1u8 << FIFO_LEVEL_REG_FLUSH_SHIFT;
+
+        Mfrc522Spi::register_write(dev, Mfrc522Register::FifoLevel, flush_byte)?;
 
         Ok(())
     }

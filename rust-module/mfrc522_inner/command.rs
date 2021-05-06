@@ -63,7 +63,7 @@ impl Mfrc522CommandByte {
         macro_rules! from_byte {
             ($value:ident, $t:ty) => {
                 unsafe { core::mem::transmute::<u8, $t>($value) }
-            }
+            };
         }
 
         Mfrc522CommandByte::new(

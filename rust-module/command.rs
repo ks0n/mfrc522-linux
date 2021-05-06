@@ -1,4 +1,4 @@
-use crate::mfrc522_inner::{Mfrc522Spi, Mfrc522Command};
+use crate::mfrc522_inner::{Mfrc522Command, Mfrc522Spi};
 
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
@@ -93,23 +93,24 @@ impl Command {
         Command { cmd, arg: None }
     }
 
-    fn mem_write(&self) -> CommandResult {
-        let dev = unsafe { &mut crate::SPI_DEVICE.unwrap() };
-
-        // FIXME: No unwrap
-        Mfrc522Spi::fifo_write(dev, &self.arg.as_ref().unwrap().data)?;
-        Mfrc522Spi::send_command(dev, Mfrc522Command::Mem)?;
+    fn mem_write(&self, spi_dev: &mut crate::SpiDevice) -> CommandResult {
+        Mfrc522Spi::fifo_write(spi_dev, &self.arg.as_ref().unwrap().data)?;
+        Mfrc522Spi::send_command(spi_dev, Mfrc522Command::Mem)?;
 
         Ok(CommandSuccess::BytesWritten(MAX_DATA_LEN))
     }
 
-    fn mem_read(&self, answer: &mut Answer) -> CommandResult {
-        todo!()
+    fn mem_read(&self, spi_dev: &mut crate::SpiDevice, answer: &mut Answer) -> CommandResult {
+        Mfrc522Spi::fifo_flush(spi_dev)?;
+
+        Mfrc522Spi::send_command(spi_dev, Mfrc522Command::Mem)?;
+        let bytes_read = Mfrc522Spi::fifo_read(spi_dev, answer)?;
+
+        Ok(CommandSuccess::BytesRead(bytes_read.into()))
     }
 
-    fn get_version(&self) -> CommandResult {
-        // As we can't get here if the device is not present, unwrap is safe
-        Mfrc522Spi::get_version(unsafe { &mut crate::SPI_DEVICE.unwrap() })?;
+    fn get_version(&self, spi_dev: &mut crate::SpiDevice) -> CommandResult {
+        Mfrc522Spi::get_version(spi_dev)?;
 
         Ok(CommandSuccess::NoAnswer)
     }
@@ -120,10 +121,13 @@ impl Command {
 
     /// Execute the required command, sending and receiving information to the MFRC522.
     pub fn execute(&self, answer: &mut Answer) -> CommandResult {
+        // As we can't get here if the device is not present, unwrap is safe
+        let mut spi_dev = unsafe { &mut crate::SPI_DEVICE.unwrap() };
+
         match &self.cmd {
-            Cmd::MemWrite => self.mem_write(),
-            Cmd::MemRead => self.mem_read(answer),
-            Cmd::GetVersion => self.get_version(),
+            Cmd::MemWrite => self.mem_write(&mut spi_dev),
+            Cmd::MemRead => self.mem_read(&mut spi_dev, answer),
+            Cmd::GetVersion => self.get_version(&mut spi_dev),
             Cmd::GenRand => self.generate_random_id(),
         }
     }
