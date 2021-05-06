@@ -1,14 +1,4 @@
-# Default configuration
-RELEASE = m
-TEST = n
-
-ifeq ($(ENABLE_TESTS), 1)
-	RELEASE = n
-	TEST = m
-endif
-
-obj-$(RELEASE) += mfrc522.o
-obj-$(TEST) += mfrc522_tests.o
+obj-m += mfrc522.o
 
 mfrc522-objs += mfrc522_module.o \
 				mfrc522_parser.o \

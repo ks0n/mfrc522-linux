@@ -8,6 +8,10 @@
 #include <linux/spi/spi.h>
 #include <linux/compiler.h>
 
+/**
+ * Abstraction on the format used to define the address bytes sent to the MFRC522
+ * as part of an SPI transfer
+ */
 struct address_byte {
 	u8 lsb : 1; // 0
 	u8 addr : 6;
@@ -43,6 +47,9 @@ struct address_byte {
 #define MFRC522_COMMAND_REG_POWER_DOWN_ON 1
 #define MFRC522_COMMAND_REG_POWER_DOWN_OFF 0
 
+/**
+ * Global SPI device registered by our driver during probing
+ */
 extern struct spi_device *mfrc522_spi;
 
 /**
