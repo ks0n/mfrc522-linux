@@ -9,7 +9,7 @@
  * Show debug information based on the given MFRC522 command
  *
  * @param cmd User command
- * @param answer Answer returned by the command executor
+ * @param answer Data returned by the command executor
  * @param answer_size Size of the answer
  */
 void do_debug(const struct mfrc522_command *cmd, const char *answer,
