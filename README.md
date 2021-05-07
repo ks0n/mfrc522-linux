@@ -30,6 +30,13 @@ make bcm2709_defconfig
 make
 ```
 
+You will need to tweak the DTS in order for the Raspberry Pi to associate the MFRC522 with
+our driver. A basic example is provided in the root of the repository. You can compile it
+and use it on your Pi as is, by replacing it in ``/boot/bcm2710-rpi-3-b-plus.dtb``.
+
+Follow [Raspberry's guide](https://www.raspberrypi.org/documentation/linux/kernel/building.md)
+to flash your newly compiled kernel onto your SD Card.
+
 ### Compiling the driver
 
 ```sh
@@ -38,8 +45,6 @@ make
 ```
 
 This will produce a file named ``mfrc522.ko``. Copy this file to your Raspberry Pi.
-
-DTS __FIXME__
 
 ### Using the module
 
