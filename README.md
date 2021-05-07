@@ -53,5 +53,10 @@ A few commands are available:
 |---|---|---|---|
 |``mem_read``|None|``mem_read``|Read the internal memory of the MFRC522 to the driver's internal buffer. Access the content of this buffer by ``read``ing the device, e.g `cat /dev/mfrc522_misc`|
 |``mem_write``|[Length of the data]:[Extra]|``mem_write:4:mfrc``|Write to the internal memory of the MFRC522|
+|``get_version``|None|``get_version``|Display the MFRC522's hardware version (v1 or v2)|
+|``gen_rand_id``|None|``gen_rand_id``|Generate a 10-byte-wide random number and store it in the MFRC522's internal memory. Use ``mem_read`` to read it|
+|``debug``|[Mode (On/Off))]|``debug:on``|Enable debug information upon MFRC522 memory writes or reads|
+
+You can also fetch statistics via the sysfs about the driver's amount of read and written bits.
 
 ## Rust module
