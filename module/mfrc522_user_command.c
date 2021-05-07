@@ -40,6 +40,7 @@ int mfrc522_command_simple_init(struct mfrc522_command *cmd, u8 cmd_byte)
  * Read the internal memory of the MFRC522
  *
  * @param answer Buffer in which to store the memory's content
+ * @param stats Statistics in which to accumulate data
  *
  * @return The size of the read on success, -1 on error
  */
@@ -71,6 +72,7 @@ static int mem_read(char *answer, struct mfrc522_statistics *stats)
  * Write 25 bytes of data into the MFRC522's internal memory
  *
  * @param data User input to write to the memory
+ * @param stats Statistics in which to accumulate data
  *
  * @return 0 on success, -1 on error
  */
@@ -97,6 +99,8 @@ static int mem_write(char *data, struct mfrc522_statistics *stats)
 
 /**
  * Generate a 10-byte wide random ID
+ *
+ * @param stats Statistics in which to accumulate data
  *
  * @return The amount of bytes received on success, -1 on error
  */

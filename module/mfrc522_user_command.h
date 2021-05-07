@@ -19,6 +19,10 @@ enum mfrc522_commands {
 	MFRC522_CMD_DEBUG,
 };
 
+/**
+ * MFRC522 User command. A user command contains a command, as well as some
+ * optional arguments
+ */
 struct mfrc522_command {
 	u8 cmd;
 	char data[MFRC522_MEM_SIZE];
