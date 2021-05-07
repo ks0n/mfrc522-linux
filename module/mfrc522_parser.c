@@ -58,7 +58,7 @@ static const struct driver_command *find_cmd_from_token(const char *token)
  * Parse a command with multiple arguments
  *
  * @param cmd Command struct to fill up
- * @param input Remaining user input, mutable and allocated via kmalloc() in mfrc522_parse()
+ * @param input Remaining user input, allocated on mfrc522_parse()'s stack
  * @param ref_cmd Reference command returned by find_cmd_from_token()
  *
  * @return 0 on success, a negative number otherwise
