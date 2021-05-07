@@ -25,6 +25,7 @@ use kernel::{
 };
 
 pub static mut SPI_DEVICE: Option<SpiDevice> = None;
+const MAX_SPI_CLOCK_SPEED: u32 = 1_000_000; // Hz
 
 module! {
     type: Mfrc522Driver,
@@ -40,14 +41,21 @@ spi_method! {
     fn mfrc522_probe(mut spi_device: SpiDevice) -> KernelResult {
         pr_info!("[MFRC522-RS] SPI Registered\n");
 
+        // FIXME: Provide safe API for max_speed_hz instead
+        unsafe {
+            if (*(spi_device.to_ptr())).max_speed_hz as u32 > MAX_SPI_CLOCK_SPEED {
+                (*(spi_device.to_ptr())).max_speed_hz = MAX_SPI_CLOCK_SPEED;
+            }
+        }
+
         let version = match Mfrc522Spi::get_version(&mut spi_device) {
             Ok(v) => v,
-            Err(_) => return Err(kernel::Error::from_kernel_errno(-1))
+            Err(_) => return Err(kernel::Error::from_kernel_errno(-1)),
         };
 
         pr_info!("[MFRC522-RS] MFRC522 {:?} detected\n", version);
 
-        unsafe {SPI_DEVICE = Some(spi_device)};
+        unsafe { SPI_DEVICE = Some(spi_device) };
 
         Ok(())
     }
