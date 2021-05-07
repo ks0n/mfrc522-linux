@@ -51,10 +51,7 @@ A few commands are available:
 
 |Command|Arguments|Example|Description|
 |---|---|---|---|
-|``mem_read``|None|``mem_read``|Read the internal memory of the MFRC522 to the driver's
-internal buffer. Access the content of this buffer by ``read``ing the device, e.g
-`cat /dev/mfrc522_misc`|
-|``mem_write``|[Length of the data]:[Extra]|``mem_write:4:mfrc``|Write to the internal
-memory of the MFRC522|
+|``mem_read``|None|``mem_read``|Read the internal memory of the MFRC522 to the driver's internal buffer. Access the content of this buffer by ``read``ing the device, e.g `cat /dev/mfrc522_misc`|
+|``mem_write``|[Length of the data]:[Extra]|``mem_write:4:mfrc``|Write to the internal memory of the MFRC522|
 
 ## Rust module
