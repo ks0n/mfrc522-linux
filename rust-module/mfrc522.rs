@@ -7,7 +7,6 @@ mod command;
 mod mfrc522_inner;
 mod parser;
 
-use command::CommandSuccess;
 use mfrc522_inner::Mfrc522Spi;
 use parser::Parser;
 
@@ -87,7 +86,7 @@ impl FileOperations for Mfrc522FileOps {
         Ok(0)
     }
 
-    fn write(&self, data: &mut UserSlicePtrReader, _: u64) -> KernelResult<usize> {
+    fn write(&self, data: &mut UserSlicePtrReader, len: u64) -> KernelResult<usize> {
         let kernel_vec = data.read_all()?;
 
         // FIXME: Should we use from_utf8 and return an error on invalid UTF8?
@@ -113,11 +112,9 @@ impl FileOperations for Mfrc522FileOps {
         // FIXME: We need to store the answer, if some bytes were written, into the driver's
         // state
         match cmd.execute(&mut answer) {
-            Err(_) => Err(Error::EINVAL),
             // FIXME: Once the Command API is reworked, this will make more sense
-            Ok(CommandSuccess::BytesWritten(amount)) => Ok(amount),
-            Ok(CommandSuccess::NoAnswer) => Ok(0),
-            _ => Err(Error::EINVAL),
+            Ok(_) => Ok(len as usize),
+            Err(_) => Err(Error::EINVAL),
         }
     }
 }
