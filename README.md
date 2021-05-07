@@ -91,6 +91,13 @@ Be careful, the ethernet card will be disabled but Wifi will be working.
 Since we are using LLVM, no need to download a cross compiling toolchain. We are also
 compiling a 64 bit kernel, so be careful of that.
 
+You will need to tweak the DTS in order for the Raspberry Pi to associate the MFRC522 with
+our driver. A basic example is provided in the root of the repository. You can compile it
+and use it on your Pi as is, by replacing it in ``/boot/bcm2710-rpi-3-b-plus.dtb``.
+
+Follow [Raspberry's guide](https://www.raspberrypi.org/documentation/linux/kernel/building.md)
+to flash your newly compiled kernel onto your SD Card.
+
 ### Compiling the driver
 
 ```sh
