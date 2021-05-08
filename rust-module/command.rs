@@ -1,5 +1,7 @@
 use crate::mfrc522_inner::{Mfrc522Command, Mfrc522Spi};
 
+use kernel::pr_info;
+
 /// Maximum amount of bytes handled by the MFRC522's internal memory
 pub const MAX_DATA_LEN: usize = 25;
 
@@ -115,8 +117,33 @@ impl Command {
         Ok(CommandSuccess::NoAnswer)
     }
 
-    fn generate_random_id(&self) -> CommandResult {
-        todo!()
+    fn show_generated_id(&self, spi_dev: &mut crate::SpiDevice) -> CommandResult {
+        let mut dbg_buffer = [0u8; MAX_DATA_LEN];
+        self.mem_read(spi_dev, &mut dbg_buffer)?;
+
+        // FIXME: Disgusting
+        pr_info!("[MFRC522-RS] Generated random ID: ");
+
+        for byte in &dbg_buffer {
+            pr_info!("{:#X}", byte);
+        }
+
+        pr_info!("\n");
+
+        Ok(CommandSuccess::NoAnswer)
+    }
+
+    fn generate_random_id(&self, spi_dev: &mut crate::SpiDevice) -> CommandResult {
+        // Clear out the internal memory
+        let zero_buffer = [0u8; MAX_DATA_LEN];
+        let cmd = Command::new(Cmd::MemWrite, MAX_DATA_LEN as u8, zero_buffer);
+        cmd.mem_write(spi_dev)?;
+
+        Mfrc522Spi::send_command(spi_dev, Mfrc522Command::GenerateRandomId)?;
+
+        self.show_generated_id(spi_dev)?;
+
+        Ok(CommandSuccess::NoAnswer)
     }
 
     /// Execute the required command, sending and receiving information to the MFRC522.
@@ -128,7 +155,7 @@ impl Command {
             Cmd::MemWrite => self.mem_write(&mut spi_dev),
             Cmd::MemRead => self.mem_read(&mut spi_dev, answer),
             Cmd::GetVersion => self.get_version(&mut spi_dev),
-            Cmd::GenRand => self.generate_random_id(),
+            Cmd::GenRand => self.generate_random_id(&mut spi_dev),
         }
     }
 }
