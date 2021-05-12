@@ -15,11 +15,12 @@ use core::pin::Pin;
 use kernel::prelude::*;
 use kernel::{
     cstr,
-    file_operations::{File, FileOpener, FileOperations},
+    file_operations::{FileOpener, FileOperations},
+    file::File,
     miscdev, spi,
     spi::SpiDevice,
     spi_method,
-    user_ptr::{UserSlicePtrReader, UserSlicePtrWriter},
+    io_buffer::{IoBufferReader, IoBufferWriter},
     Error,
 };
 
@@ -37,8 +38,9 @@ module! {
 }
 
 spi_method! {
-    fn mfrc522_probe(mut spi_device: SpiDevice) -> KernelResult {
+    fn mfrc522_probe(mut spi_device: SpiDevice) -> Result {
         pr_info!("[MFRC522-RS] SPI Registered\n");
+        pr_info!("[MFRC522-RS] SPI Registered, spi_device = {:#?}\n", spi_device.to_ptr());
 
         // FIXME: Provide safe API for max_speed_hz instead
         unsafe {
@@ -63,7 +65,7 @@ spi_method! {
 struct Mfrc522FileOps;
 
 impl FileOpener<()> for Mfrc522FileOps {
-    fn open(_ctx: &()) -> KernelResult<Self::Wrapper> {
+    fn open(_ctx: &()) -> Result<Self::Wrapper> {
         pr_info!("[MFRC522-RS] File opened\n");
 
         Ok(Box::try_new(Self)?)
@@ -75,18 +77,18 @@ impl FileOperations for Mfrc522FileOps {
 
     kernel::declare_file_operations!(read, write);
 
-    fn read(
+    fn read<T: IoBufferWriter>(
         &self,
         _file: &File,
-        _data: &mut UserSlicePtrWriter,
+        _data: &mut T,
         _offset: u64,
-    ) -> KernelResult<usize> {
+    ) -> Result<usize> {
         pr_info!("[MFRC522-RS] Being read from\n");
 
         Ok(0)
     }
 
-    fn write(&self, data: &mut UserSlicePtrReader, len: u64) -> KernelResult<usize> {
+    fn write<T: IoBufferReader>(&self, _: &File, data: &mut T, len: u64) -> Result<usize> {
         let kernel_vec = data.read_all()?;
 
         // FIXME: Should we use from_utf8 and return an error on invalid UTF8?
@@ -125,7 +127,7 @@ struct Mfrc522Driver {
 }
 
 impl KernelModule for Mfrc522Driver {
-    fn init() -> KernelResult<Self> {
+    fn init() -> Result<Self> {
         pr_info!("[MFRC522-RS] Init\n");
 
         let misc =

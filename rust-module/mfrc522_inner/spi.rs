@@ -1,5 +1,5 @@
 use kernel::spi::{Spi, SpiDevice};
-use kernel::{pr_info, Error, KernelResult};
+use kernel::{pr_info, Error, Result};
 
 use super::{Mfrc522Command, Mfrc522CommandByte, Mfrc522PowerDown, Mfrc522Receiver};
 
@@ -74,7 +74,7 @@ impl Mfrc522Spi {
         reg: Mfrc522Register,
         read_buf: &mut [u8],
         read_len: u8,
-    ) -> KernelResult {
+    ) -> Result {
         pr_info!("[MFRC522-RS] register_read\n");
 
         let address_byte = AddressByte::new(reg, AddressByteMode::Read).to_byte();
@@ -88,7 +88,7 @@ impl Mfrc522Spi {
     }
 
     /// Write to an MFRC522 register
-    fn register_write(dev: &mut SpiDevice, reg: Mfrc522Register, value: u8) -> KernelResult {
+    fn register_write(dev: &mut SpiDevice, reg: Mfrc522Register, value: u8) -> Result {
         let address_byte = AddressByte::new(reg, AddressByteMode::Write).to_byte();
         let data = &[address_byte, value];
 
@@ -96,7 +96,7 @@ impl Mfrc522Spi {
     }
 
     /// Get the MFRC522 version stored in VersionReg register, section 9.3.4.8
-    pub fn get_version(dev: &mut SpiDevice) -> KernelResult<Mfrc522Version> {
+    pub fn get_version(dev: &mut SpiDevice) -> Result<Mfrc522Version> {
         let mut version = [0u8];
 
         pr_info!("[MFRC522-RS] get_version\n");
@@ -112,7 +112,7 @@ impl Mfrc522Spi {
     }
 
     /// Get the current FIFO level of the MFRC522
-    pub fn fifo_level(dev: &mut SpiDevice) -> KernelResult<u8> {
+    pub fn fifo_level(dev: &mut SpiDevice) -> Result<u8> {
         let mut level = [0u8];
 
         Mfrc522Spi::register_read(dev, Mfrc522Register::FifoLevel, &mut level, 1)?;
@@ -125,7 +125,7 @@ impl Mfrc522Spi {
     }
 
     /// Read data from the MFRC522's FIFO
-    pub fn fifo_read(dev: &mut SpiDevice, data: &mut [u8]) -> KernelResult<u8> {
+    pub fn fifo_read(dev: &mut SpiDevice, data: &mut [u8]) -> Result<u8> {
         let fifo_level = Self::fifo_level(dev)?;
 
         Self::register_read(dev, Mfrc522Register::FifoData, data, fifo_level)?;
@@ -134,7 +134,7 @@ impl Mfrc522Spi {
     }
 
     /// Write data to the MFRC522's FIFO
-    pub fn fifo_write(dev: &mut SpiDevice, data: &[u8]) -> KernelResult {
+    pub fn fifo_write(dev: &mut SpiDevice, data: &[u8]) -> Result {
         for byte in data {
             Mfrc522Spi::register_write(dev, Mfrc522Register::FifoData, *byte)?;
         }
@@ -142,7 +142,7 @@ impl Mfrc522Spi {
         Ok(())
     }
 
-    pub fn fifo_flush(dev: &mut SpiDevice) -> KernelResult {
+    pub fn fifo_flush(dev: &mut SpiDevice) -> Result {
         let flush_byte: u8 = 1u8 << FIFO_LEVEL_REG_FLUSH_SHIFT;
 
         Mfrc522Spi::register_write(dev, Mfrc522Register::FifoLevel, flush_byte)?;
@@ -151,7 +151,7 @@ impl Mfrc522Spi {
     }
 
     /// Wait for a command to finish executing
-    fn wait_for_command(dev: &mut SpiDevice) -> KernelResult {
+    fn wait_for_command(dev: &mut SpiDevice) -> Result {
         loop {
             let current_cmd = Mfrc522Spi::read_command(dev)?;
             if current_cmd == Mfrc522Command::Idle {
@@ -163,7 +163,7 @@ impl Mfrc522Spi {
     }
 
     /// Send a command to the MFRC522
-    pub fn send_command(dev: &mut SpiDevice, cmd: Mfrc522Command) -> KernelResult {
+    pub fn send_command(dev: &mut SpiDevice, cmd: Mfrc522Command) -> Result {
         let cmd_byte =
             Mfrc522CommandByte::new(cmd, Mfrc522PowerDown::Off, Mfrc522Receiver::On).to_byte();
 
@@ -173,7 +173,7 @@ impl Mfrc522Spi {
     }
 
     /// Read the current command byte
-    pub fn read_command(dev: &mut SpiDevice) -> KernelResult<Mfrc522Command> {
+    pub fn read_command(dev: &mut SpiDevice) -> Result<Mfrc522Command> {
         let mut cmd_byte = [0u8];
 
         Mfrc522Spi::register_read(dev, Mfrc522Register::Command, &mut cmd_byte, 1)?;
