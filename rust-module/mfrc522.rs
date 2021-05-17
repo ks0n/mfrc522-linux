@@ -88,7 +88,7 @@ impl FileOperations for Mfrc522FileOps {
         Ok(0)
     }
 
-    fn write<T: IoBufferReader>(&self, _: &File, data: &mut T, len: u64) -> Result<usize> {
+    fn write<T: IoBufferReader>(&self, _: &File, data: &mut T, _offset: u64) -> Result<usize> {
         let kernel_vec = data.read_all()?;
 
         // FIXME: Should we use from_utf8 and return an error on invalid UTF8?
@@ -115,7 +115,7 @@ impl FileOperations for Mfrc522FileOps {
         // state
         match cmd.execute(&mut answer) {
             // FIXME: Once the Command API is reworked, this will make more sense
-            Ok(_) => Ok(len as usize),
+            Ok(_) => Ok(kernel_vec.len()),
             Err(_) => Err(Error::EINVAL),
         }
     }
