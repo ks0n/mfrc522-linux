@@ -81,7 +81,7 @@ impl Mfrc522Spi {
         let address_byte_slice = &[address_byte];
 
         for i in 0..read_len as usize {
-            Spi::write_then_read(dev, address_byte_slice, 1, &mut read_buf[i..i + 1], 1)?;
+            Spi::write_then_read(dev, address_byte_slice, &mut read_buf[i..i + 1])?;
         }
 
         Ok(())
@@ -92,7 +92,7 @@ impl Mfrc522Spi {
         let address_byte = AddressByte::new(reg, AddressByteMode::Write).to_byte();
         let data = &[address_byte, value];
 
-        Spi::write(dev, data, 2)
+        Spi::write(dev, data)
     }
 
     /// Get the MFRC522 version stored in VersionReg register, section 9.3.4.8
