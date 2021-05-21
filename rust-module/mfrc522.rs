@@ -14,13 +14,12 @@ use alloc::boxed::Box;
 use core::pin::Pin;
 use kernel::prelude::*;
 use kernel::{
-    cstr,
-    file_operations::{FileOpener, FileOperations},
+    cstr, declare_spi_methods,
     file::File,
-    miscdev, spi,
-    spi::SpiDevice,
-    spi_method,
+    file_operations::{FileOpener, FileOperations},
     io_buffer::{IoBufferReader, IoBufferWriter},
+    miscdev, spi,
+    spi::{SpiDevice, SpiMethods},
     Error,
 };
 
@@ -35,31 +34,6 @@ module! {
     license: b"GPL v2",
     params: {
     },
-}
-
-spi_method! {
-    fn mfrc522_probe(mut spi_device: SpiDevice) -> Result {
-        pr_info!("[MFRC522-RS] SPI Registered\n");
-        pr_info!("[MFRC522-RS] SPI Registered, spi_device = {:#?}\n", spi_device.to_ptr());
-
-        // FIXME: Provide safe API for max_speed_hz instead
-        unsafe {
-            if (*(spi_device.to_ptr())).max_speed_hz as u32 > MAX_SPI_CLOCK_SPEED {
-                (*(spi_device.to_ptr())).max_speed_hz = MAX_SPI_CLOCK_SPEED;
-            }
-        }
-
-        let version = match Mfrc522Spi::get_version(&mut spi_device) {
-            Ok(v) => v,
-            Err(_) => return Err(kernel::Error::from_kernel_errno(-1)),
-        };
-
-        pr_info!("[MFRC522-RS] MFRC522 {:?} detected\n", version);
-
-        unsafe { SPI_DEVICE = Some(spi_device) };
-
-        Ok(())
-    }
 }
 
 struct Mfrc522FileOps;
@@ -77,12 +51,7 @@ impl FileOperations for Mfrc522FileOps {
 
     kernel::declare_file_operations!(read, write);
 
-    fn read<T: IoBufferWriter>(
-        &self,
-        _file: &File,
-        _data: &mut T,
-        _offset: u64,
-    ) -> Result<usize> {
+    fn read<T: IoBufferWriter>(&self, _file: &File, _data: &mut T, _offset: u64) -> Result<usize> {
         pr_info!("[MFRC522-RS] Being read from\n");
 
         Ok(0)
@@ -121,6 +90,38 @@ impl FileOperations for Mfrc522FileOps {
     }
 }
 
+struct Mfrc522SpiMethods;
+
+impl SpiMethods for Mfrc522SpiMethods {
+    declare_spi_methods!(probe);
+
+    fn probe(mut spi_device: SpiDevice) -> Result {
+        pr_info!("[MFRC522-RS] SPI Registered\n");
+        pr_info!(
+            "[MFRC522-RS] SPI Registered, spi_device = {:#?}\n",
+            spi_device.to_ptr()
+        );
+
+        // FIXME: Provide safe API for max_speed_hz instead
+        unsafe {
+            if (*(spi_device.to_ptr())).max_speed_hz as u32 > MAX_SPI_CLOCK_SPEED {
+                (*(spi_device.to_ptr())).max_speed_hz = MAX_SPI_CLOCK_SPEED;
+            }
+        }
+
+        let version = match Mfrc522Spi::get_version(&mut spi_device) {
+            Ok(v) => v,
+            Err(_) => return Err(kernel::Error::from_kernel_errno(-1)),
+        };
+
+        pr_info!("[MFRC522-RS] MFRC522 {:?} detected\n", version);
+
+        unsafe { SPI_DEVICE = Some(spi_device) };
+
+        Ok(())
+    }
+}
+
 struct Mfrc522Driver {
     _spi: Pin<Box<spi::DriverRegistration>>,
     _misc: Pin<Box<miscdev::Registration>>,
@@ -133,12 +134,9 @@ impl KernelModule for Mfrc522Driver {
         let misc =
             miscdev::Registration::new_pinned::<Mfrc522FileOps>(cstr!("mfrc522_chrdev"), None, ())?;
 
-        let spi = spi::DriverRegistration::new_pinned(
+        let spi = spi::DriverRegistration::new_pinned::<Mfrc522SpiMethods>(
             &THIS_MODULE,
             cstr!("mfrc522"),
-            Some(mfrc522_probe),
-            None,
-            None,
         )?;
 
         Ok(Mfrc522Driver {
