@@ -14,13 +14,11 @@ use alloc::boxed::Box;
 use core::pin::Pin;
 use kernel::prelude::*;
 use kernel::{
-    cstr, declare_spi_methods,
     file::File,
     file_operations::{FileOpener, FileOperations},
     io_buffer::{IoBufferReader, IoBufferWriter},
-    miscdev, spi,
     spi::{SpiDevice, SpiMethods},
-    Error,
+    miscdev, spi, declare_spi_methods, Error, c_str,
 };
 
 pub static mut SPI_DEVICE: Option<SpiDevice> = None;
@@ -132,11 +130,11 @@ impl KernelModule for Mfrc522Driver {
         pr_info!("[MFRC522-RS] Init\n");
 
         let misc =
-            miscdev::Registration::new_pinned::<Mfrc522FileOps>(cstr!("mfrc522_chrdev"), None, ())?;
+            miscdev::Registration::new_pinned::<Mfrc522FileOps>(c_str!("mfrc522_chrdev"), None, ())?;
 
         let spi = spi::DriverRegistration::new_pinned::<Mfrc522SpiMethods>(
             &THIS_MODULE,
-            cstr!("mfrc522"),
+            c_str!("mfrc522"),
         )?;
 
         Ok(Mfrc522Driver {
